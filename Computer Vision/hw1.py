@@ -13,7 +13,6 @@ cv2.waitKey(0)
 # cv2.waitKey(0)
 
 def median_filter(data, filter_size):
-    temp = []
     indexer = filter_size // 2
     window = [
         (i, j)
@@ -46,15 +45,33 @@ filtered = median_filter(img_n, 3)
 
 strel = np.ones((3,3), np.uint8)
 open = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, strel)
+close = cv2.morphologyEx(filtered, cv2.MORPH_CLOSE, strel)
+oc = cv2.morphologyEx(open, cv2.MORPH_CLOSE, strel)
 
-cv2.namedWindow('aftero', )
-cv2.imshow('aftero', open)
-cv2.waitKey(0)
+# T, binary_n = cv2.threshold(close, 50, 255, cv2.THRESH_BINARY)
+# cv2.imwrite('close.png', binary_n)
+# T, binary_n = cv2.threshold(open, 50, 255, cv2.THRESH_BINARY)
+# cv2.imwrite('open.png', binary_n)
+# T, binary_n = cv2.threshold(oc, 50, 255, cv2.THRESH_BINARY)
+# cv2.imwrite('oc.png', binary_n)
 
 # close = cv2.morphologyEx(open, cv2.MORPH_CLOSE, strel)
 #
 # cv2.namedWindow('afteroc', )
 # cv2.imshow('afteroc', close)
 # cv2.waitKey(0)
+
+T, binary_nf = cv2.threshold(img_nf, 50, 255, cv2.THRESH_BINARY)
+T, binary_n = cv2.threshold(open, 50, 255, cv2.THRESH_BINARY)
+
+cv2.namedWindow('binary_nf', )
+cv2.imshow('binary_nf', binary_nf)
+cv2.waitKey(0)
+
+# cv2.namedWindow('binary_n', )
+# cv2.imshow('binary_n', binary_n)
+# cv2.waitKey(0)
+
+print(T)
 
 cv2.destroyAllWindows()
