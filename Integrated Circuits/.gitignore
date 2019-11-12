@@ -1,0 +1,5 @@
+# Ignore files inside the work folder
+/*/work
+
+# Ignore .wlf files
+*.wlf

@@ -33,12 +33,12 @@ initial begin
 	@(posedge clk); //Start counting
 	cnt_enable <= 1;
 	
-	repeat(16) begin //Count until after overflow
+	repeat(20) begin //Count until after overflow
 		@(posedge clk);
 	end
 	
 	cnt_enable <= 0; //Stop the counting, retain value
-	repeat(2) @(posedge clk);
+	repeat(5) @(posedge clk);
 	
 	@(negedge clk); //Asynchronous reset with priority over satEn
 	rst <= 1;
