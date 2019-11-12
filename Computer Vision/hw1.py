@@ -4,6 +4,7 @@ import numpy as np
 img_nf = cv2.imread('NF7.png', cv2.IMREAD_GRAYSCALE)
 img_n = cv2.imread('N7.png', cv2.IMREAD_GRAYSCALE)
 
+print(img_n.shape[0], img_n.shape[1])
 cv2.namedWindow('image', )
 cv2.imshow('image', img_nf)
 cv2.waitKey(0)
@@ -32,7 +33,7 @@ def median_filter(data, filter_size):
             )[index]
     return data
 
-filtered = median_filter(img_n, 3)
+filtered = median_filter(img_n, 5)
 
 # cv2.namedWindow('after', )
 # cv2.imshow('after', filtered)
@@ -61,17 +62,35 @@ oc = cv2.morphologyEx(open, cv2.MORPH_CLOSE, strel)
 # cv2.imshow('afteroc', close)
 # cv2.waitKey(0)
 
-T, binary_nf = cv2.threshold(img_nf, 50, 255, cv2.THRESH_BINARY)
-T, binary_n = cv2.threshold(open, 50, 255, cv2.THRESH_BINARY)
+T_nf, binary_nf = cv2.threshold(img_nf, 54, 255, cv2.THRESH_BINARY)
+binary_nf[:,300:] = cv2.morphologyEx(binary_nf[:,300:], cv2.MORPH_CLOSE, strel)
+T, binary_n = cv2.threshold(open, 56, 255, cv2.THRESH_BINARY)
 
-cv2.namedWindow('binary_nf', )
-cv2.imshow('binary_nf', binary_nf)
-cv2.waitKey(0)
-
+# cv2.namedWindow('binary_nf', )
+# cv2.imshow('binary_nf', binary_nf)
+# cv2.waitKey(0)
+#
 # cv2.namedWindow('binary_n', )
 # cv2.imshow('binary_n', binary_n)
 # cv2.waitKey(0)
 
-print(T)
+img_cont_nf, contours_nf, hierarchy_nf = cv2.findContours(binary_nf, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+cv2.drawContours(img_cont_nf, contours_nf, -1, 127, 2)
+
+img_cont_n, contours_n, hierarchy_n = cv2.findContours(binary_n, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+cv2.drawContours(img_cont_n, contours_n, -1, 127, 2)
+
+cv2.namedWindow('binary_n', )
+cv2.imshow('binary_n', binary_n)
+cv2.waitKey(0)
+
+
+cv2.namedWindow('contours_nf', )
+cv2.imshow('contours_nf', img_cont_nf)
+cv2.waitKey(0)
+
+cv2.namedWindow('contours_n', )
+cv2.imshow('contours_n', img_cont_n)
+cv2.waitKey(0)
 
 cv2.destroyAllWindows()
