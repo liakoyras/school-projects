@@ -134,6 +134,13 @@ print(len(eligible_contours_n))
 print(len(eligible_contours_nf))
 
 
+def compare_contour_areas(contours1, contours2):
+    print('img1 img2')
+    print('---------')
+    for n in range(len(contours1)):
+        print(int(cv2.contourArea(contours1[n])), int(cv2.contourArea(contours2[n])))
+
+compare_contour_areas(eligible_contours_nf, eligible_contours_n)
 
 # cv2.imwrite('eligible_contours_nf_img.png', eligible_contours_nf_img)
 # cv2.imwrite('eligible_contours_n_img.png', eligible_contours_n_img)
