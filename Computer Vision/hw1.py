@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 img_nf = cv2.imread('NF7.png', cv2.IMREAD_GRAYSCALE)
+print(img_nf[0,1])
 img_n = cv2.imread('N7.png', cv2.IMREAD_GRAYSCALE)
 
 print(img_nf.shape)
@@ -148,5 +149,47 @@ compare_contour_areas(eligible_contours_nf, eligible_contours_n)
 # cv2.namedWindow('eligible_contours_n_img', )
 # cv2.imshow('eligible_contours_n_img', eligible_contours_n_img)
 # cv2.waitKey(0)
+
+bounding_n = []
+bounding_nf = []
+for n in range(len(eligible_contours_nf)):
+    bounding_nf.append(cv2.boundingRect(eligible_contours_nf[n]))
+    bounding_n.append(cv2.boundingRect(eligible_contours_n[n]))
+
+img_rec_nf = cv2.imread('NF7.png', cv2.IMREAD_COLOR)
+img_rec_n = cv2.cvtColor(filtered, cv2.COLOR_GRAY2RGB)
+integral_nf = cv2.integral(img_nf)
+integral_n = cv2.integral(filtered)
+for n in range(len(bounding_nf)):
+    (x1, y1, w1, h1) = bounding_nf[n]
+    (x2, y2, w2, h2) = bounding_n[n]
+
+    count1 = (w1+1)*(h1+1)
+    count2 = (w2+1)*(h2+1)
+
+    sum1 = integral_nf[y1, x1] - integral_nf[y1, x1+w1] - integral_nf[y1+h1, x1] + integral_nf[y1+h1, x1+w1]
+    sum2 = integral_n[y2, x2] - integral_n[y2, x2+w2] - integral_n[y2+h2, x2] + integral_n[y2+h2, x2+w2]
+
+    mean1 = round(sum1/count1, 2)
+    mean2 = round(sum2/count2, 2)
+
+    cv2.rectangle(img_rec_nf, (x1, y1), (x1 + w1, y1 + h1), (0, 0, 255), 2)
+    cv2.rectangle(img_rec_n, (x2, y2), (x2 + w2, y2 + h2), (255, 0, 0), 2)
+
+    img_rec_nf = cv2.putText(img_rec_nf, str(n), (x1+5, y1+h1-5), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.6, (0, 0, 255))
+    img_rec_n = cv2.putText(img_rec_n, str(n), (x2+5, y2+h2-5), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.6, (255, 0, 0))
+    img_rec_nf = cv2.putText(img_rec_nf, str(mean1), (x1+(w1//2)-20, y1+(h1//2)+10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0))
+    img_rec_n = cv2.putText(img_rec_n, str(mean2), (x2+(w2//2)-20, y2+(h2//2)+10), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0))
+
+cv2.imwrite('img_rec_nf.png', img_rec_nf)
+cv2.imwrite('img_rec_n.png', img_rec_n)
+
+cv2.namedWindow('final', )
+cv2.imshow('final', img_rec_nf)
+cv2.waitKey(0)
+
+cv2.namedWindow('final2', )
+cv2.imshow('final2', img_rec_n)
+cv2.waitKey(0)
 
 cv2.destroyAllWindows()
