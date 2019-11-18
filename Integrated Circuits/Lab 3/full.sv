@@ -1,19 +1,19 @@
 module full (
 input logic [8:0] X,
 input logic [8:0] O,
-output logic isFull
+output logic isFull/* ,
+output logic [8:0] temp */
 );
 
-logic temp[8:0];
-assign temp = X || O;
+logic [8:0] temp;
+assign temp = (X | O);
 
-assign isFull = &temp;
 
-/* always_comb
+always_comb
 begin
-	if(temp == 9’b111111111)
+	if(temp == 9'b111111111)
 		isFull = 1;
 	else
 		isFull = 0;
-end */
+end
 endmodule

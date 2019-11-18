@@ -8,11 +8,11 @@ output logic winO,
 output logic noWin
 );
 
-error e (.X[8:0](x[8:0]), .O[8:0](o[8:0]), .err(error));
-full f (.X[8:0](x[8:0]), .O[8:0](o[8:0]), .isFull(full));
-winX w0 (.X[8:0](x[8:0]), .win(winX));
-winO w1 (.O[8:0](o[8:0]), .win(winO));
+error e (.X(x), .O(o), .err(error));
+full f (.X(x), .O(o), .isFull(full));
+winX w0 (.X(x), .win(winX));
+winO w1 (.O(o), .win(winO));
 
-asign noWin = full && ~WinX && ~win0;
+assign noWin = ~winX && ~winO;
 
 endmodule
