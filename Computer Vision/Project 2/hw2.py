@@ -51,12 +51,17 @@ def match_keypoints(img_1, img_2):
     return img_pt1, img_pt2
 
 
-def stitch(img_1, img_2, Η):
+def homography(img_1, img_2):
     img_pt1, img_pt2 = match_keypoints(img_1, img_2)
+    h, mask = cv2.findHomography(img_pt2, img_pt1, cv2.RANSAC)
 
-    M, mask = cv2.findHomography(img_pt2, img_pt1, cv2.RANSAC)
+    return h
 
-    result = cv2.warpPerspective(img_2, M*Η, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
+
+def stitch(img_1, img_2):
+    mask = homography(img_1, img_2)
+
+    result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
     result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
 
     grayscale = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
@@ -68,17 +73,69 @@ def stitch(img_1, img_2, Η):
 
     return result
 
+# def panorama(images):
+#     homographies = []
+#     for i in range(1, len(images) - 1):
+#         h = homography(images[i], images[i+1])
+#         homographies.append(h)
+#
+#     temp = stitch(images[0], images[1], 1)
+#     h = homographies[1]
+#     for img in range(2, len(images)):
+#         for i in range(1, img-1):
+#             h = homographies[i]*h
+#         temp = stitch(temp, images[img], h)
+#
+#     return temp
 
-res = stitch(img1, img2, 1)
-res2 = stitch(res, img3, 1)
-res3 = stitch(res2, img4, 1)
+
+# images = [img1, img2, img3, img4]
+# homographies = []
+# for i in range(1, len(images) - 1):
+#     h = homography(images[i], images[i+1])
+#     homographies.append(h)
+
+
+res1 = stitch(img1, img2)
+# res2 = stitch(img2, img3)
+res2 = stitch(img3, img4)
+# res4 = stitch(res1, res2)
+# res5 = stitch(res2, res3)
+res = stitch(res1, res2)
+
+final = res[:img1.shape[0], :]
+
+# res = stitch(img1, img2, 1)
+# res2 = stitch(res, img3, 1)
+# res3 = stitch(res2, img4, 1)
+# result_ = panorama([img1, img2, img3, img4])
 
 print("Finish time: ", time.time() - start)
+#
+# cv2.imwrite('result1.png', res)
+# cv2.imwrite('result2.png', res2)
+# cv2.imwrite('final.png', res)
 
-cv2.imwrite('result1.png', res)
-cv2.imwrite('result2.png', res2)
-cv2.imwrite('result3.png', res3)
+cv2.namedWindow('before1', cv2.WINDOW_NORMAL)
+cv2.imshow('before1', img1)
+cv2.waitKey(0)
+cv2.imshow('before1', img2)
+cv2.waitKey(0)
+cv2.imshow('before1', img3)
+cv2.waitKey(0)
+cv2.imshow('before1', img4)
+cv2.waitKey(0)
 
 cv2.namedWindow('after', cv2.WINDOW_NORMAL)
-cv2.imshow('after', res3)
+cv2.imshow('after', res1)
 cv2.waitKey(0)
+cv2.imshow('after', res2)
+cv2.waitKey(0)
+cv2.imshow('after', res)
+cv2.waitKey(0)
+cv2.imshow('after', final)
+cv2.waitKey(0)
+# cv2.imshow('after', res5)
+# cv2.waitKey(0)
+# cv2.imshow('after', res)
+# cv2.waitKey(0)
