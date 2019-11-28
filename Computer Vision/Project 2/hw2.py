@@ -11,28 +11,34 @@ img3 = cv2.imread('yard-06.png')
 img4 = cv2.imread('yard-05.png')
 
 
-# cv2.namedWindow('before1', cv2.WINDOW_NORMAL)
-# cv2.imshow('before1', img1)
-# cv2.waitKey(0)
-# cv2.namedWindow('before2', cv2.WINDOW_NORMAL)
-# cv2.imshow('before2', img2)
-# cv2.waitKey(0)
-# cv2.imshow('before', img3)
-# cv2.waitKey(0)
-# cv2.imshow('before', img4)
-# cv2.waitKey(0)
+cv2.namedWindow('before', cv2.WINDOW_NORMAL)
+cv2.imshow('before', img1)
+cv2.waitKey(0)
+cv2.imshow('before', img2)
+cv2.waitKey(0)
+cv2.imshow('before', img3)
+cv2.waitKey(0)
+cv2.imshow('before', img4)
+cv2.waitKey(0)
+
 
 # Finds and matches keypoints in two images using SIFT and BFMatcher
 # Takes the two images as input (in order from left to right)
 # and returns two numpy arrays with the points in each image that match
-def match_keypoints(img_1, img_2):
-    sift = cv2.xfeatures2d_SIFT.create()
+def match_keypoints(img_1, img_2, method):
+    if method == "SIFT":
+        det_desc = cv2.xfeatures2d_SIFT.create()
+    elif method == "SURF":
+        det_desc = cv2.xfeatures2d_SIFT.create()
+    else:
+        print("The detector and descriptor method is not correct.")
+        exit(-1)
 
-    kp1 = sift.detect(img_1)
-    desc1 = sift.compute(img_1, kp1)
+    kp1 = det_desc.detect(img_1)
+    desc1 = det_desc.compute(img_1, kp1)
 
-    kp2 = sift.detect(img_2)
-    desc2 = sift.compute(img_2, kp2)
+    kp2 = det_desc.detect(img_2)
+    desc2 = det_desc.compute(img_2, kp2)
 
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
 
@@ -51,15 +57,17 @@ def match_keypoints(img_1, img_2):
     return img_pt1, img_pt2
 
 
-def homography(img_1, img_2):
-    img_pt1, img_pt2 = match_keypoints(img_1, img_2)
+# Finds the homography between two images
+def homography(img_1, img_2, method):
+    img_pt1, img_pt2 = match_keypoints(img_1, img_2, method)
     h, mask = cv2.findHomography(img_pt2, img_pt1, cv2.RANSAC)
 
     return h
 
 
-def stitch(img_1, img_2):
-    mask = homography(img_1, img_2)
+# Stitches together two images using the homography
+def stitch(img_1, img_2, method):
+    mask = homography(img_1, img_2, method)
 
     result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
     result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
@@ -73,58 +81,20 @@ def stitch(img_1, img_2):
 
     return result
 
-# def panorama(images):
-#     homographies = []
-#     for i in range(1, len(images) - 1):
-#         h = homography(images[i], images[i+1])
-#         homographies.append(h)
-#
-#     temp = stitch(images[0], images[1], 1)
-#     h = homographies[1]
-#     for img in range(2, len(images)):
-#         for i in range(1, img-1):
-#             h = homographies[i]*h
-#         temp = stitch(temp, images[img], h)
-#
-#     return temp
 
-
-# images = [img1, img2, img3, img4]
-# homographies = []
-# for i in range(1, len(images) - 1):
-#     h = homography(images[i], images[i+1])
-#     homographies.append(h)
-
-
-res1 = stitch(img1, img2)
-# res2 = stitch(img2, img3)
-res2 = stitch(img3, img4)
-# res4 = stitch(res1, res2)
-# res5 = stitch(res2, res3)
-res = stitch(res1, res2)
+res1 = stitch(img1, img2, "SURF")
+res2 = stitch(img3, img4, "SURF")
+res = stitch(res1, res2, "SURF")
 
 final = res[:img1.shape[0], :]
 
-# res = stitch(img1, img2, 1)
-# res2 = stitch(res, img3, 1)
-# res3 = stitch(res2, img4, 1)
-# result_ = panorama([img1, img2, img3, img4])
 
 print("Finish time: ", time.time() - start)
-#
-# cv2.imwrite('result1.png', res)
-# cv2.imwrite('result2.png', res2)
-# cv2.imwrite('final.png', res)
 
-cv2.namedWindow('before1', cv2.WINDOW_NORMAL)
-cv2.imshow('before1', img1)
-cv2.waitKey(0)
-cv2.imshow('before1', img2)
-cv2.waitKey(0)
-cv2.imshow('before1', img3)
-cv2.waitKey(0)
-cv2.imshow('before1', img4)
-cv2.waitKey(0)
+cv2.imwrite('result1.png', res1)
+cv2.imwrite('result2.png', res2)
+cv2.imwrite('result.png', res)
+cv2.imwrite('final.png', final)
 
 cv2.namedWindow('after', cv2.WINDOW_NORMAL)
 cv2.imshow('after', res1)
@@ -135,7 +105,3 @@ cv2.imshow('after', res)
 cv2.waitKey(0)
 cv2.imshow('after', final)
 cv2.waitKey(0)
-# cv2.imshow('after', res5)
-# cv2.waitKey(0)
-# cv2.imshow('after', res)
-# cv2.waitKey(0)
