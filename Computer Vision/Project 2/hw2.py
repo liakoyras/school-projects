@@ -1,32 +1,14 @@
 import cv2
 import numpy as np
-import time
-
-print("Start")
-start = time.time()
-
-img1 = cv2.imread('yard/yard-08.png')
-img2 = cv2.imread('yard/yard-07.png')
-img3 = cv2.imread('yard/yard-06.png')
-img4 = cv2.imread('yard/yard-05.png')
-
-
-# cv2.namedWindow('before', cv2.WINDOW_NORMAL)
-# cv2.imshow('before', img1)
-# cv2.waitKey(0)
-# cv2.imshow('before', img2)
-# cv2.waitKey(0)
-# cv2.imshow('before', img3)
-# cv2.waitKey(0)
-# cv2.imshow('before', img4)
-# cv2.waitKey(0)
 
 
 # Finds and matches keypoints in two images using BFMatcher
-# Takes the two images as input (in order from left to right)
-# and returns two numpy arrays with the points in each image that match
-# Options: SIFT (for SIFT detector), SURF (for SURF detector)
+# Manually implemented cross checking
+# Input: Two OpenCV images in order from left to right
+# Returns: Two numpy arrays with the points in each image that match
+# Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
 def match_keypoints(img_1, img_2, method):
+    det_desc = None
     if method == "SIFT":
         det_desc = cv2.xfeatures2d_SIFT.create()
     elif method == "SURF":
@@ -59,6 +41,9 @@ def match_keypoints(img_1, img_2, method):
 
 
 # Finds the homography between two images
+# Input: Two OpenCV images in order from left to right
+# Returns: A numpy array with the homography mask
+# Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
 def homography(img_1, img_2, method):
     img_pt1, img_pt2 = match_keypoints(img_1, img_2, method)
     h, mask = cv2.findHomography(img_pt2, img_pt1, cv2.RANSAC)
@@ -66,75 +51,77 @@ def homography(img_1, img_2, method):
     return h
 
 
-def translate(img, offset):
-    num_cols, num_rows = img.shape[:2]
-    translation_matrix = np.float32([[1, 0, offset], [0, 1, offset]])
-    img_translation = cv2.warpAffine(img, translation_matrix, (num_cols + offset, num_rows + offset))
-
-    return img_translation
-
-
-# Crops the extra black out of an image
+# Uses a bounding box in order to crop the empty space of an image
+# Input: An OpenCV image
+# Returns: The cropped image
 def crop(img):
     grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(grayscale, 1, 255, cv2.THRESH_BINARY)
+
     contours = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnt = contours[0]
+
     x, y, w, h = cv2.boundingRect(cnt)
     img = img[y:y + h, x:x + w]
 
     return img
 
 
-# Stitches together two images using the homography
-# Options: method for detecting features (SIFT or SURF)
-#          direction for the stitching (l2r or r2l)
-def stitch(img_1, img_2, method, direction):
-    if direction == 'r2l':
-        mask = homography(img_2, img_1, method)
-        result = cv2.warpPerspective(img_1, mask, (img_1.shape[0]+1000, img_1.shape[1]+1000))
-        # result = crop(result)
-        (h1, w1) = result.shape[:2]
-        (h2, w2) = img_2.shape[:2]
-        final = np.zeros((max(h1, h2), w1 + w2, 3), dtype="uint8")
-        final[0:h1, 0:w1] = result
-        cv2.imwrite('1st.png', final)
-        final[0:h2, img_1.shape[1]:img_1.shape[1]+w2] = img_2
-        cv2.imwrite('and 2nd.png', final)
+# Stitches together two images
+# Input: Two OpenCV images in order from left to right
+# Returns: A numpy array with the homography mask
+# Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
+def stitch(img_1, img_2, method):
+    mask = homography(img_1, img_2, method)
+    result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
+    result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
 
-        # result = translate(result, max(img1.shape))
-    else:
-        mask = homography(img_2, img_1, method)
-        result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
-        result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
+    final = crop(result)
 
-    return result
+    return final
+
+
+# Creates a panorama out of four images
+# Input: A list of 4 OpenCV images in order from left to right
+# Returns: The panorama image and its cropped form
+# Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
+def panorama(images, method):
+    res1 = stitch(images[0], images[1], method)
+    res1 = res1[:images[0].shape[0], :-10]
+
+    res2 = stitch(images[2], images[3], method)
+    res2 = res2[:images[2].shape[0], :-10]
+
+    res = stitch(res1, res2, method)
+    res_cropped = res[:img1.shape[0], :-10]
+
+    return res, res_cropped
+
+
+img1 = cv2.imread('yard/yard-08.png')
+img2 = cv2.imread('yard/yard-07.png')
+img3 = cv2.imread('yard/yard-06.png')
+img4 = cv2.imread('yard/yard-05.png')
 
 
 # "SIFT" "SURF"
-res1 = stitch(img1, img2, "SIFT", 'r2l')
-cv2.imwrite('l2r_example.png', res1)
-# res1 = res1[:img1.shape[0], :]
-# res2 = stitch(img3, img4, "SIFT")
-# res2 = res2[:img3.shape[0], :]
-# res = stitch(res1, res2, "SIFT")
-#
-# final = res[:img3.shape[0], :]
+inp_images = [img1, img2, img3, img4]
+final_SIFT, final_SIFT_cropped = panorama(inp_images, "SIFT")
+final_SURF, final_SURF_cropped = panorama(inp_images, "SURF")
 
-
-print("Finish time: ", time.time() - start)
-# cv2.imwrite('final_result.png', final)
-# cv2.imwrite('result1.png', res1)
-# cv2.imwrite('result2.png', res2)
-# cv2.imwrite('result.png', res)
-# cv2.imwrite('final.png', final)
+cv2.imwrite('final_SIFT.png', final_SIFT)
+cv2.imwrite('final_SIFT_cropped.png', final_SIFT_cropped)
+cv2.imwrite('final_SURF.png', final_SURF)
+cv2.imwrite('final_SURF_cropped.png', final_SURF_cropped)
 
 cv2.namedWindow('after', cv2.WINDOW_NORMAL)
-cv2.imshow('after', res1)
+cv2.imshow('after', final_SIFT)
 cv2.waitKey(0)
-# cv2.imshow('after', res2)
-# cv2.waitKey(0)
-# cv2.imshow('after', res)
-# cv2.waitKey(0)
-# cv2.imshow('after', final)
-# cv2.waitKey(0)
+cv2.imshow('after', final_SIFT_cropped)
+cv2.waitKey(0)
+cv2.imshow('after', final_SURF)
+cv2.waitKey(0)
+cv2.imshow('after', final_SURF_cropped)
+cv2.waitKey(0)
+
+
