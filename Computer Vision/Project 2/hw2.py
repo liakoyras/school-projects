@@ -5,26 +5,27 @@ import time
 print("Start")
 start = time.time()
 
-img1 = cv2.imread('yard-08.png')
-img2 = cv2.imread('yard-07.png')
-img3 = cv2.imread('yard-06.png')
-img4 = cv2.imread('yard-05.png')
+img1 = cv2.imread('yard/yard-08.png')
+img2 = cv2.imread('yard/yard-07.png')
+img3 = cv2.imread('yard/yard-06.png')
+img4 = cv2.imread('yard/yard-05.png')
 
 
-cv2.namedWindow('before', cv2.WINDOW_NORMAL)
-cv2.imshow('before', img1)
-cv2.waitKey(0)
-cv2.imshow('before', img2)
-cv2.waitKey(0)
-cv2.imshow('before', img3)
-cv2.waitKey(0)
-cv2.imshow('before', img4)
-cv2.waitKey(0)
+# cv2.namedWindow('before', cv2.WINDOW_NORMAL)
+# cv2.imshow('before', img1)
+# cv2.waitKey(0)
+# cv2.imshow('before', img2)
+# cv2.waitKey(0)
+# cv2.imshow('before', img3)
+# cv2.waitKey(0)
+# cv2.imshow('before', img4)
+# cv2.waitKey(0)
 
 
-# Finds and matches keypoints in two images using SIFT and BFMatcher
+# Finds and matches keypoints in two images using BFMatcher
 # Takes the two images as input (in order from left to right)
 # and returns two numpy arrays with the points in each image that match
+# Options: SIFT (for SIFT detector), SURF (for SURF detector)
 def match_keypoints(img_1, img_2, method):
     if method == "SIFT":
         det_desc = cv2.xfeatures2d_SIFT.create()
@@ -65,43 +66,75 @@ def homography(img_1, img_2, method):
     return h
 
 
-# Stitches together two images using the homography
-def stitch(img_1, img_2, method):
-    mask = homography(img_1, img_2, method)
+def translate(img, offset):
+    num_cols, num_rows = img.shape[:2]
+    translation_matrix = np.float32([[1, 0, offset], [0, 1, offset]])
+    img_translation = cv2.warpAffine(img, translation_matrix, (num_cols + offset, num_rows + offset))
 
-    result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
-    result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
+    return img_translation
 
-    grayscale = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+
+# Crops the extra black out of an image
+def crop(img):
+    grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(grayscale, 1, 255, cv2.THRESH_BINARY)
     contours = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnt = contours[0]
     x, y, w, h = cv2.boundingRect(cnt)
-    result = result[y:y + h, x:x + w]
+    img = img[y:y + h, x:x + w]
+
+    return img
+
+
+# Stitches together two images using the homography
+# Options: method for detecting features (SIFT or SURF)
+#          direction for the stitching (l2r or r2l)
+def stitch(img_1, img_2, method, direction):
+    if direction == 'r2l':
+        mask = homography(img_2, img_1, method)
+        result = cv2.warpPerspective(img_1, mask, (img_1.shape[0]+1000, img_1.shape[1]+1000))
+        # result = crop(result)
+        (h1, w1) = result.shape[:2]
+        (h2, w2) = img_2.shape[:2]
+        final = np.zeros((max(h1, h2), w1 + w2, 3), dtype="uint8")
+        final[0:h1, 0:w1] = result
+        cv2.imwrite('1st.png', final)
+        final[0:h2, img_1.shape[1]:img_1.shape[1]+w2] = img_2
+        cv2.imwrite('and 2nd.png', final)
+
+        # result = translate(result, max(img1.shape))
+    else:
+        mask = homography(img_2, img_1, method)
+        result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
+        result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
 
     return result
 
 
-res1 = stitch(img1, img2, "SURF")
-res2 = stitch(img3, img4, "SURF")
-res = stitch(res1, res2, "SURF")
-
-final = res[:img1.shape[0], :]
+# "SIFT" "SURF"
+res1 = stitch(img1, img2, "SIFT", 'r2l')
+cv2.imwrite('l2r_example.png', res1)
+# res1 = res1[:img1.shape[0], :]
+# res2 = stitch(img3, img4, "SIFT")
+# res2 = res2[:img3.shape[0], :]
+# res = stitch(res1, res2, "SIFT")
+#
+# final = res[:img3.shape[0], :]
 
 
 print("Finish time: ", time.time() - start)
-
-cv2.imwrite('result1.png', res1)
-cv2.imwrite('result2.png', res2)
-cv2.imwrite('result.png', res)
-cv2.imwrite('final.png', final)
+# cv2.imwrite('final_result.png', final)
+# cv2.imwrite('result1.png', res1)
+# cv2.imwrite('result2.png', res2)
+# cv2.imwrite('result.png', res)
+# cv2.imwrite('final.png', final)
 
 cv2.namedWindow('after', cv2.WINDOW_NORMAL)
 cv2.imshow('after', res1)
 cv2.waitKey(0)
-cv2.imshow('after', res2)
-cv2.waitKey(0)
-cv2.imshow('after', res)
-cv2.waitKey(0)
-cv2.imshow('after', final)
-cv2.waitKey(0)
+# cv2.imshow('after', res2)
+# cv2.waitKey(0)
+# cv2.imshow('after', res)
+# cv2.waitKey(0)
+# cv2.imshow('after', final)
+# cv2.waitKey(0)
