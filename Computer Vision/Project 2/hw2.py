@@ -8,12 +8,12 @@ import numpy as np
 # Returns: Two numpy arrays with the points in each image that match
 # Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
 def match_keypoints(img_1, img_2, method):
-    det_desc = None
     if method == "SIFT":
         det_desc = cv2.xfeatures2d_SIFT.create()
     elif method == "SURF":
-        det_desc = cv2.xfeatures2d_SIFT.create()
+        det_desc = cv2.xfeatures2d_SURF.create()
     else:
+        det_desc = None
         print("The detector and descriptor method is not correct.")
         exit(-1)
 
@@ -37,6 +37,12 @@ def match_keypoints(img_1, img_2, method):
     img_pt1 = np.array(img_pt1)
     img_pt2 = np.array(img_pt2)
 
+    f = open("points.txt", "w+")
+    f.write("Point pairs \n")
+    for i1, i2 in zip(img_pt1, img_pt2):
+        f.write(str(i1) + "    "+str(i2)+"\n")
+    f.write("------------\n")
+
     return img_pt1, img_pt2
 
 
@@ -45,8 +51,8 @@ def match_keypoints(img_1, img_2, method):
 # Returns: A numpy array with the homography mask
 # Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
 def homography(img_1, img_2, method):
-    img_pt1, img_pt2 = match_keypoints(img_1, img_2, method)
-    h, mask = cv2.findHomography(img_pt2, img_pt1, cv2.RANSAC)
+    img_1pt, img_2pt = match_keypoints(img_1, img_2, method)
+    h, mask = cv2.findHomography(img_2pt, img_1pt, cv2.RANSAC)
 
     return h
 
@@ -71,10 +77,23 @@ def crop(img):
 # Input: Two OpenCV images in order from left to right
 # Returns: A numpy array with the homography mask
 # Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
-def stitch(img_1, img_2, method):
-    mask = homography(img_1, img_2, method)
-    result = cv2.warpPerspective(img_2, mask, (img_1.shape[1] + 1000, img_1.shape[0] + 1000))
-    result[0: img_1.shape[0], 0: img_1.shape[1]] = img_1
+#          direction - r2l (for stitching the right image to the left),
+#                      l2r (for stitching the left image to the right)
+def stitch(left, right, method, direction):
+    if direction == 'l2r':
+        h = homography(right, left, method)
+        translation_matrix = np.array([[1, 0, 1000], [0, 1, 0], [0, 0, 1]])
+        mat = np.matmul(translation_matrix, h)
+        result = cv2.warpPerspective(left, mat, (left.shape[1] + 2000, left.shape[0] + 2000))
+        result[0: right.shape[0], 1000: 1000 + right.shape[1]] = right
+    elif direction == 'r2l':
+        h = homography(left, right, method)
+        result = cv2.warpPerspective(right, h, (right.shape[1] + 2000, right.shape[0] + 2000))
+        result[0: left.shape[0], 0: left.shape[1]] = left
+    else:
+        result = None
+        print("The stitching direction was not specified correctly.")
+        exit(-2)
 
     final = crop(result)
 
@@ -85,15 +104,24 @@ def stitch(img_1, img_2, method):
 # Input: A list of 4 OpenCV images in order from left to right
 # Returns: The panorama image and its cropped form
 # Options: method - SIFT (for SIFT detector), SURF (for SURF detector)
-def panorama(images, method):
-    res1 = stitch(images[0], images[1], method)
-    res1 = res1[:images[0].shape[0], :-10]
-
-    res2 = stitch(images[2], images[3], method)
-    res2 = res2[:images[2].shape[0], :-10]
-
-    res = stitch(res1, res2, method)
-    res_cropped = res[:img1.shape[0], :-10]
+#          direction - r2l (gives the sensation of rotating the camera right to left),
+#                      l2r (gives the sensation of rotating the camera left to right)
+def panorama(images, method, direction):
+    res1 = stitch(images[0], images[1], method, 'l2r')
+    res2 = stitch(images[2], images[3], method, 'r2l')
+    if direction == 'l2r':
+        res2 = res2[:images[2].shape[0], :-10]
+        res = stitch(res1, res2, method, direction)
+        res_cropped = res[:images[1].shape[0], :]
+    elif direction == 'r2l':
+        res1 = res1[:images[1].shape[0], :-10]
+        res = stitch(res1, res2, method, direction)
+        res = res[:, :-20]
+        res_cropped = res[:images[2].shape[0], :]
+    else:
+        res, res_cropped = None, None
+        print("The panorama viewing direction was not specified correctly.")
+        exit(-3)
 
     return res, res_cropped
 
@@ -103,25 +131,10 @@ img2 = cv2.imread('yard/yard-07.png')
 img3 = cv2.imread('yard/yard-06.png')
 img4 = cv2.imread('yard/yard-05.png')
 
-
-# "SIFT" "SURF"
 inp_images = [img1, img2, img3, img4]
-final_SIFT, final_SIFT_cropped = panorama(inp_images, "SIFT")
-final_SURF, final_SURF_cropped = panorama(inp_images, "SURF")
 
-cv2.imwrite('final_SIFT.png', final_SIFT)
-cv2.imwrite('final_SIFT_cropped.png', final_SIFT_cropped)
-cv2.imwrite('final_SURF.png', final_SURF)
-cv2.imwrite('final_SURF_cropped.png', final_SURF_cropped)
+final_SIFT, _ = panorama(inp_images, "SIFT", 'l2r')
+final_SURF, _ = panorama(inp_images, "SURF", 'l2r')
 
-cv2.namedWindow('after', cv2.WINDOW_NORMAL)
-cv2.imshow('after', final_SIFT)
-cv2.waitKey(0)
-cv2.imshow('after', final_SIFT_cropped)
-cv2.waitKey(0)
-cv2.imshow('after', final_SURF)
-cv2.waitKey(0)
-cv2.imshow('after', final_SURF_cropped)
-cv2.waitKey(0)
-
-
+cv2.imwrite('SIFT.png', final_SIFT)
+cv2.imwrite('SURF.png', final_SURF)
