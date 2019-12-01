@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import time
 
 
 # Finds and matches keypoints in two images using BFMatcher
@@ -37,12 +38,12 @@ def match_keypoints(img_1, img_2, method):
     img_pt1 = np.array(img_pt1)
     img_pt2 = np.array(img_pt2)
 
-    f = open("points.txt", "w+")
+    f = open("points.txt", "a")
     f.write("Point pairs \n")
     for i1, i2 in zip(img_pt1, img_pt2):
         f.write(str(i1) + "    "+str(i2)+"\n")
     f.write("------------\n")
-
+    f.close()
     return img_pt1, img_pt2
 
 
@@ -80,15 +81,16 @@ def crop(img):
 #          direction - r2l (for stitching the right image to the left),
 #                      l2r (for stitching the left image to the right)
 def stitch(left, right, method, direction):
+    translation = int(max(left.shape) * 1.5)
     if direction == 'l2r':
         h = homography(right, left, method)
-        translation_matrix = np.array([[1, 0, 1000], [0, 1, 0], [0, 0, 1]])
+        translation_matrix = np.array([[1, 0, translation], [0, 1, 0], [0, 0, 1]])
         mat = np.matmul(translation_matrix, h)
-        result = cv2.warpPerspective(left, mat, (left.shape[1] + 2000, left.shape[0] + 2000))
-        result[0: right.shape[0], 1000: 1000 + right.shape[1]] = right
+        result = cv2.warpPerspective(left, mat, (translation*2, translation*2))
+        result[0: right.shape[0], translation:translation + right.shape[1]] = right
     elif direction == 'r2l':
         h = homography(left, right, method)
-        result = cv2.warpPerspective(right, h, (right.shape[1] + 2000, right.shape[0] + 2000))
+        result = cv2.warpPerspective(right, h, (translation*2, translation*2))
         result[0: left.shape[0], 0: left.shape[1]] = left
     else:
         result = None
@@ -107,17 +109,32 @@ def stitch(left, right, method, direction):
 #          direction - r2l (gives the sensation of rotating the camera right to left),
 #                      l2r (gives the sensation of rotating the camera left to right)
 def panorama(images, method, direction):
+    f = open("points.txt", "a")
+    f.write("Method: "+method+ "\n")
+    f.close()
+    print("First stitching")
+    f = open("points.txt", "a")
+    f.write("First stitching \n")
+    f.close()
     res1 = stitch(images[0], images[1], method, 'l2r')
+    print("Second stitching")
+    f = open("points.txt", "a")
+    f.write("Second stitching \n")
+    f.close()
     res2 = stitch(images[2], images[3], method, 'r2l')
+    print("Third stitching")
+    f = open("points.txt", "a")
+    f.write("Third stitching \n")
+    f.close()
     if direction == 'l2r':
-        res2 = res2[:images[2].shape[0], :-10]
+        res2 = res2[:images[2].shape[0], 10:]
         res = stitch(res1, res2, method, direction)
-        res_cropped = res[:images[1].shape[0], :]
+        res_cropped = res[:images[1].shape[0], 20:]
     elif direction == 'r2l':
         res1 = res1[:images[1].shape[0], :-10]
         res = stitch(res1, res2, method, direction)
-        res = res[:, :-20]
-        res_cropped = res[:images[2].shape[0], :]
+        res = res[:, :-10]
+        res_cropped = res[:images[2].shape[0], :-20]
     else:
         res, res_cropped = None, None
         print("The panorama viewing direction was not specified correctly.")
@@ -126,15 +143,60 @@ def panorama(images, method, direction):
     return res, res_cropped
 
 
+# Resizes an image
+# Input: img - the OpenCV image to be resized
+#        scale_percent - the percentage to which the source image will be scaled
+# Returns: The resized image
+def change_size(img, scale_percent):
+    width = int(img.shape[1] * scale_percent / 100)
+    height = int(img.shape[0] * scale_percent / 100)
+    dim = (width, height)
+
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+
+    return resized
+
+
 img1 = cv2.imread('yard/yard-08.png')
 img2 = cv2.imread('yard/yard-07.png')
 img3 = cv2.imread('yard/yard-06.png')
 img4 = cv2.imread('yard/yard-05.png')
 
 inp_images = [img1, img2, img3, img4]
+print("Panorama with yard images")
+print("Start SIFT")
+start = time.time()
+final_SIFT, final_SIFT_cropped = panorama(inp_images, "SIFT", 'l2r')
+sift = time.time()
+print("SIFT time: ", sift-start)
+print("Start SIFT")
+final_SURF, final_SURF_cropped = panorama(inp_images, "SURF", 'l2r')
+print("SURF time", time.time()-sift)
 
-final_SIFT, _ = panorama(inp_images, "SIFT", 'l2r')
-final_SURF, _ = panorama(inp_images, "SURF", 'l2r')
+cv2.imwrite("SIFT.png", final_SIFT)
+cv2.imwrite("SURF.png", final_SURF)
+cv2.namedWindow('yard', cv2.WINDOW_NORMAL)
+cv2.imshow('yard', final_SIFT)
+cv2.waitKey(0)
 
-cv2.imwrite('SIFT.png', final_SIFT)
-cv2.imwrite('SURF.png', final_SURF)
+# img1_mine = cv2.imread('mine/1.jpg')
+# img2_mine = cv2.imread('mine/2.jpg')
+# img3_mine = cv2.imread('mine/3.jpg')
+# img4_mine = cv2.imread('mine/4.jpg')
+#
+# inp_images_mine = [change_size(i, 33) for i in [img1_mine, img2_mine, img3_mine, img4_mine]]
+# print("Panorama with my images")
+# print("Start SIFT")
+# start = time.time()
+# final_SIFT_mine, final_SIFT_cropped_mine = panorama(inp_images_mine, "SIFT", 'l2r')
+# sift = time.time()
+# print("SIFT time: ", sift-start)
+# print("Start SIFT")
+# final_SURF_mine, final_SURF_cropped_mine = panorama(inp_images_mine, "SURF", 'l2r')
+# print("SURF time", time.time()-sift)
+#
+# cv2.imwrite("SIFT_mine.png", final_SIFT_mine)
+# cv2.imwrite("SURF_mine.png", final_SURF_mine)
+# cv2.namedWindow('mine', cv2.WINDOW_NORMAL)
+# cv2.imshow('mine', final_SIFT_mine)
+# cv2.waitKey(0)
