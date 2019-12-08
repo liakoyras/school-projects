@@ -1,0 +1,70 @@
+module rr_arbiter_buggy #(
+  parameter int REQS         = 4,  // The number of requests (4 is enough)
+  parameter int BUG          = 0   // Change to 1, 2, 4 to insert bug. (0 no bug)
+) (
+ //Input-Output List
+ input  logic clk,
+ input  logic rst,
+ 
+ input  logic[REQS-1:0] reqs_i,     // The requests to choose from
+ output logic[REQS-1:0] grants_o,   // The winner (if any)
+ output logic           any_grant_o // Signals that there is at least one winner
+);
+
+`pragma protect begin_protected
+`pragma protect version = 1
+`pragma protect author = "IP Provider" , author_info = "Widget 5 version 3.2"
+`pragma protect encrypt_agent = "QuestaSim" , encrypt_agent_info = "2019.3_1"
+`pragma protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`pragma protect key_method = "rsa"
+`pragma protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`pragma protect key_block
+IAXHtumiH2BMWiNTZsyCIuHdR0EjmbBgPgYq72kihqn1EB1UpyFyYmNiv2cT/2V/
+LPLw80Z3JQWyJsm4wWo2V27DZ/XECAvixBobyVUKRPdslK/bTF6N6sAXfdyMzA6R
+o+73tt5gBWq/XvuiYfAoeg+hwZ8jfHUFh+lRCr9QxC8=
+`pragma protect data_method = "aes128-cbc"
+`pragma protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 2000 )
+`pragma protect data_block
+PHAnhkvhhHIVer8uc2Z5SdSIHsvVzfVpdbDuj+TRyrO5OzWqNVeP7Gat1FoeUvSi
+mk0U+fUAWzfv2l4Tw/00hFx1I/yANeSefY0bvjT5HA6DAzJvURJu3X5AFRx5PsL0
++nVWqVxkLZB9RXwxQ6tJdoKkVAQf636tjwiRfUVejh8w6SacawjoqO3bag86fHQz
++800YouFLKDNqDDLSsfpgsWz5R8sWbaZgGRd59rStra5Sh/yPB4bJHnzkAbQck9B
+z54ZrgGJgsYJG+IQPu9Iw7jgO1GlJY7pbbMSic8LgjIVCNxWQDUDdygc9cSc4UMt
+Vgts3BHuHhqGUf7E+WyD149R3pawA/bzGr+Q5FsIh1LIfr7fd6zHYxBegGEfqhf5
+5AMJinLiljFE7tF79O2oawsM8FAftiIdg9X3qSUaPKX6ahdqZ4aX5YD7mf4O1QOq
+7Qn/xHMFNblChnRgNBTQ4QUyTiMcILAprVFHgbYMlYZynyMarSCydfs4Kaw4qqjz
+eFeKAYJ2StVzEHs2NnbqtYMSmCU8ZJCCW1Nile2Bw+gn3ehahiPee/6av0re2wUY
+ahS/1a3tcb5MmVIVTi0ZMmCcmGHJLBVXP7Fob5x6VRjXs18gbWkLuYL+qH+3G0Px
+YU1VgbdzpHzSKLnx5sTsGwcMdp32oT+eRsIMXy2uOvD1zlHoDd13zAFFkNAxqeL8
+6sg7oKgWMYGrtx3gJEPhe3hxgJUZPSW7FXH08YYJ2qFcnMvq8e3qBHSSxMu8jxIw
+SwIva9ItCSDniuhLeLHTItcIFs7J77c8dl4HLfNWPusisIBCqO5+Zp3VkOfJJ2bm
+B8csblbC1/PKsWyLIuaHWO0A+6lcm8fT8TON0Fa+dWE45/lU1RI0LMABPajRiO/M
+x14oY+F+mjHz5mlXd6cta3zitg2+w19/pJrIEcYhvdqoxk8QZTzuXzsTWAwLAiUF
+jYBldAlUaPEIJjxAJGXZBEdA5chkrPRcTB54ITf3VwBLTtLAJqmMT0fRcXZBUdnq
+ei3XHwkoyjBpVk/TeSPWoAj7e5WOsJ0wuve/BtQFCO57mh1Yj4zxEku2cHFxKECv
+ruHDSFSO7EDwlqOIuZgnJ+ZTk7Zx9jJ2rv49I1cl+nAci2pUnOZhdlNQEv7ZMwQU
+Tq2spMkdS72ROo5t1mPhxNZTWg6oTrQGLzXr/HGa5LrZhGxKFlXtH1JJcBJrRIkP
+rNKH8G5UCSVH5ZTxcQhb4pKdthEAWTY+I2ybkzVBE/Y5x/wqNV1KEWixurnxnK+U
+Jb6H/SruRQ9Ythr8wdFmK5TyPn1+gaZOxtgVwc5XD2QdnAF7iuHo0Fvz37DInaIq
+PcHsjct/efvOwJ8/4Sp9ahk1hAyplSLI7/c6RdlLJ5l0L0Ca25qVjzLK0lWUmpzR
+WBO435rKvuJfm1xRKsMHv2hcVW3QSMW/9pNTTgR782gEvoI6tQMErjeqeHS3tg6y
+OVPEbvdfut4szOfvvhVfOEYxc/Dokvadn795WEx0sT2wNQmKdHZeAt3FKjejbzEJ
+CyvIEW9ovQQIHR+3XZRsNuLX3TjDmSH7rp+jrduIasi9lDgHFIDm7hSiz830DIh5
+SYwiPpvCLod4OaDj9fR45aURku1W+kcWqUNfEgdw/f34ULBUyP2yfzBq8pl/jibQ
++Cb/Y1CGwz/4phRfp/5JFlXoU076c+MSu8Y/DYosTLzQDbjwU2wgjT4Imab5/0Vp
+6oTX93/p6o5zDWhM8kMyoNTiwb/pm3XeCWJndXn6cHs9ykI93LM6Lue7hfV+caAz
+fBSKFxvxQr/jtFTqugh+Ezek1Ft8K+50MxVI4cEPohGRFtIYMVSUigKXILVdZQab
+OnGYr5nYhwoNilpOAjiwL4WePqRN3rKQB2yq6NKkb3cSxdCX8weKS0DD42A/Jqer
++uHjZepTjcmhLoAV1rw6YXDy7oykXfDvrd4JiQZodT1dPaQIq9J8O+1K7CY3EIqL
+2gUmHuwtERD9I6rd43B0pliXLSHL8RXJZGftp8/qec6qjEzB2M2+uxviU4UlDggf
+x7BZnGhHfeYTbOYDh7O3cl1tk0k52eYOQFLeTABMjJbYQ3c+fjPQbwgxrbjd7gCk
+XaHPsarLMQ9Hp9pQ3JxbTTlOHyEa4im5YoqOOPghyYV9J+uK5c5l9tnh+0yjJkV/
+4OccnFqbEDIGgz1a9FN9xJ0QaX6E9G1tYXG8QC3ziWXSAeBIseuEPbOmtBvZajQk
+ezZc2l64j2q2PIeJmah91VUCMCmL+HTICWPA0zJXYpr5zuCsS+Y7CJBMG6bkM1Aj
+s8ahgWBfGnAb5kweMnqDBnot3hWftR4TLeF8GVJ9Z8AMeOvWx9TbPJ6D2YwW7y3K
+CLRH6bNv1r2QKGY52k8dcHRMRMvrJxWRPmD0eb4J+Nbel+Z6c3mZxubBFOCEA7Cj
+pwBXZ6QkeLhZzY+yFH7/dc4AH9TiBTOfN+MA10aDtMzV9XyCFDy4AOc4hTFfoEkH
+qG/koh+xPD3chzyuE61Jud5UMU2ad0rqDZj2nq+WubiHFn6edDr1KS0FzZlj1IlG
+xJ+q+4gJoyuAoLYcfY7lGQS6gc03K5UTaehXT4dQgki0ojR7QUFZubETrmFBEi+N
+1vDKd6VqXI4KFAZvZRROksFqI3AVAkEqb8gDtmmZFDA=
+`pragma protect end_protected
