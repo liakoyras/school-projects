@@ -18,7 +18,7 @@ always begin
 end
 
 // Instantiate the buggy arbiter
-rr_arbiter_buggy #(4, 8) arbiter (
+rr_arbiter_buggy #(4, 2) arbiter (
 	.clk(clock),
 	.rst(reset),
 	.reqs_i(requests),
@@ -59,7 +59,7 @@ initial begin
 	requests <= 4'b1111; // exists=1, grants=0001 */
 	 
 	// Bug 2 (if the requests don't change, it doesn't change the grant)
-	/* @(posedge clock);
+	@(posedge clock);
 	reset <= 0;
 	requests <= 4'b0001; // exists=1, grants=0001
 	
@@ -77,7 +77,35 @@ initial begin
 	
 	@(posedge clock);
 	@(posedge clock);
-	requests <= 4'b1011; // exists=1, grants=1000 */
+	requests <= 4'b1011; // exists=1, grants=1000
+	
+	@(posedge clock);
+	@(posedge clock);
+	requests <= 4'b1111; 
+	
+	@(posedge clock);
+	@(posedge clock);
+	@(posedge clock);
+	@(posedge clock);
+	requests <= 4'b1110;
+	
+	@(posedge clock);
+	@(posedge clock);
+	requests <= 4'b1101;
+	
+	@(posedge clock);
+	@(posedge clock);
+	requests <= 4'b1111;
+	
+	@(posedge clock);
+	@(posedge clock);
+	@(posedge clock);
+	@(posedge clock);
+	requests <= 4'b1110;
+	
+	@(posedge clock);
+	@(posedge clock);
+	requests <= 4'b0000;
 	
 	// Bug 4 (when it's 2's turn, it also grants 3)
 	/* @(posedge clock);
@@ -92,7 +120,7 @@ initial begin
 	requests <= 4'b0100; // exists=1, grants=0100 */
 	
 	// Bug 8 (if it gives a grant to 3, it continues to give as long as it asks)
-	@(posedge clock);
+	/* @(posedge clock);
 	requests <= 4'b1111; // exists=1, grants=0001
 	
 	@(posedge clock);
@@ -102,7 +130,7 @@ initial begin
 	requests <= 4'b1001; // exists=1, grants=0001
 	
 	@(posedge clock);
-	requests <= 4'b0001; // exists=1, grants=0001
+	requests <= 4'b0001; // exists=1, grants=0001 */
 end
 
 endmodule

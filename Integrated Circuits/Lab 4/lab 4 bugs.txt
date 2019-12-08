@@ -1,0 +1,10 @@
+1: Whenever it is time to give the grant to 1, instead it doesn't give any grants.
+Also, any_grants signal is 1 instead of falling to 0.
+
+2: any_grants signal falls to 0 while there are grants.
+For every request input change, it assigns the priorities correctly but does not
+reassign on every clock.
+
+4: Whenever it is time to give a grant to 2, it also grants 3
+
+8: After giving a grant to 3, it will grant 3 for as long as it requests
