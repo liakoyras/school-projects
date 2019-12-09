@@ -1,15 +1,20 @@
 module binary_search 
 #(
-	parameter int number_size,	// The size of the numbers inside the memory
+	parameter int number_size,	// The size of the numbers stored inside the memory
 	parameter int index_size,	// The size of the index of the last element
 	parameter int memory_size	// The size of the memory array
 )
 (
+	// Inputs
 	input logic clk,
 	input logic rst,
 	input logic start,
 	input logic [number_size-1:0] target,
-	output logic [index_size-1:0] out
+	input logic [number_size-1:0] memory_in,
+	
+	// Outputs
+	output logic [index_size-1:0] out,
+	output logic [index_size-1:0] memory_address
 );
 
 enum logic [3:0] {
@@ -32,9 +37,6 @@ logic [index_size-1:0] index;
 logic [number_size-1:0] left, right, mid;
 logic [index_size-1:0] count;
 logic [number_size-1:0] tmp;
-
-memory #(number_size, memory_size, index_size) array
-	(.clk(clk), .address(count), .dataOut(tmp));//, .we(1'b0), .dataIn(0));
 
 always_ff @(posedge clk) begin
 	if(rst) begin
@@ -70,6 +72,7 @@ always_ff @(posedge clk) begin
 				state <= ml2;
 			end
 			S3: begin
+				tmp <= memory_in;
 				state <= tlt;
 			end
 			tlt: begin
@@ -99,4 +102,7 @@ always_ff @(posedge clk) begin
 		endcase
 	end
 end
+
+assign memory_address = count;
+
 endmodule
