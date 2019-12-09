@@ -88,11 +88,11 @@ always_ff @(posedge clk) begin
 				else state <= S6;
 			end
 			S5: begin
-				right <= count -1;
+				right <= count - 1;
 				state <= lgr;
 			end
 			S6: begin
-				index <= tmp;
+				index <= count;
 				state <= lgr;
 			end
 			S7: begin
