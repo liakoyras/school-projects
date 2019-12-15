@@ -1,4 +1,5 @@
-*
-!hw3.py
-!.gitignore
-!vocabulary.npy
+.idea
+imagedb_test/
+imagedb_train/
+venv/
+test.jpg
