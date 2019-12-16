@@ -28,3 +28,5 @@ always_comb begin
 		grants_o = 0;
 	end
 end
+
+endmodule
