@@ -1,8 +1,8 @@
-module 3_to_8_decoder(
+module m_3_to_8_decoder(
 	input logic [2:0] in_3_bits,
 	input logic enable,
 	output logic [7:0] out_8_bits
-)
+);
 
 assign out_8_bits = (!enable)? 8'b00000000:
 					(in_3_bits == 3'b000)? 8'b00000001 :

@@ -4,7 +4,7 @@ module priority_register(
 	input logic [2:0] d_i,
 	input logic en_i,
 	output logic [2:0] q_o
-)
+);
 
 logic [2:0] register;
 
