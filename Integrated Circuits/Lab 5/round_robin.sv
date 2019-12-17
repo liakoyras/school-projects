@@ -42,7 +42,6 @@ m_3_to_8_decoder d3 (
 	.in_3_bits(grants_3),
 	.enable(enable),
 	.out_8_bits(grants_8)
-
 );
 
 endmodule

@@ -6,7 +6,7 @@ module arbiter(
 	output logic [3:0] cnt_o
 );
 
-assign any_grant_o = &(grants_o);
+assign any_grant_o = (|(reqs_i))? 1'b1 : 1'b0 ;
 
 always_comb begin
 	cnt_o = 0;
@@ -18,26 +18,10 @@ always_comb begin
 	end
 end
 
-logic any_request;
-assign any_request = &reqs_i;
-
 logic found;
-int index;
+logic [2:0] index;
 
-always_comb begin
-	/* if(any_request) begin
-		found = 0;
-		grants_o = 0;
-		for(int j = lowp_i + 1; j <= lowp_i + 1 + 7; j=j+1) begin
-			if(reqs_i[j] && (!found)) begin
-				grants_o = j;
-				found = 1;
-			end
-		end
-	end else begin
-		grants_o = 8'b00000000;
-	end */
-	
+always_comb begin	
 	found = 0;
 	grants_o = 0;
 	index = (lowp_i + 1);

@@ -10,8 +10,8 @@ logic [2:0] register;
 
 assign q_o = register;
 
-always_ff @(posedge clock, posedge reset) begin
-	if(reset) register <= 3'b111;
+always_ff @(posedge clock, negedge reset) begin
+	if(~reset) register <= 3'b111;
 	else begin 
 		if(en_i) begin
 			register <= d_i;
