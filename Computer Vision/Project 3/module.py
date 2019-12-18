@@ -12,12 +12,13 @@ The train images must be on separate folders depending on the
 class the image belongs.
 
 This script requires that `opencv-contrib-python version 3.4.2.17`
-be installed within the Python environment you are running this
+and `pandas` be installed within the Python environment you are running this
 script in.
 """
 
 import numpy as np
 import cv2
+import pandas as pd
 import os
 import time
 
@@ -29,7 +30,7 @@ def extract_sift_features(image_path, sift_object):
     ----------
     image_path : str
         The file location of the image
-    sift_object : xfeatures2d_SIFT
+    sift_object : cv2.xfeatures2d_SIFT
         The SIFT object that will be used to extract the features
 
     Returns
@@ -57,7 +58,7 @@ def create_feature_database(directory, folders, sift_object):
         The path of the directory that contains the class folders
     folders : list
         The list that contains the names of class folders
-    sift_object : xfeatures2d_SIFT
+    sift_object : cv2.xfeatures2d_SIFT
         The SIFT object to be used with extract_sift_features()
 
     Returns
@@ -103,7 +104,7 @@ def create_vocabulary(k, train_directory, folders, sift_object, verbose=False):
         The path of the directory that contains the class folders
     folders : list
         The list that contains the names of class folders
-    sift_object : xfeatures2d_SIFT
+    sift_object : cv2.xfeatures2d_SIFT
         The SIFT object to be used with extract_sift_features()
     verbose: bool
         Set as True if you want progress messages and a summary
@@ -230,7 +231,7 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
         The list that contains the names of class folders
     vocabulary_path : str
         The path to the saved BoVW vocabulary
-    sift_object : xfeatures2d_SIFT
+    sift_object : cv2.xfeatures2d_SIFT
         The SIFT object that will be used by extract_sift_features
     normalize : bool
         It will be used by encode_bovw_descriptor to allow L2 norm
@@ -300,24 +301,142 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
         np.save('train_dbs/' + filename, bovw_descs)
 
 
-train_folders = ['fighter_jet/', 'motorbike/', 'school_bus/', 'touring_bike/', 'airplane/', 'car_side/']
-sift = cv2.xfeatures2d_SIFT.create()
+def k_nearest_neighbors(train_set, test_row, num_neighbors):
+    """Uses the k Nearest Neighbors algorithm in order to
+    classify a row according to a training set.
+    The algorithm uses Euclidean Distance as a measure
+    and assumes that the last element of each row in the
+    training set is the class identifier.
 
-for vocab in os.listdir('vocabularies'):
-    create_train_features('imagedb_train/', train_folders, 'vocabularies/'+vocab, sift, True, True)
+    Parameters
+    ----------
+    train_set : ndarray
+        The training set containing the encoded descriptors
+        The last element of each descriptor is assumed to be
+        the class identifier
+    test_row : ndarray
+        A one dimensional ndarray that will be checked against
+        the training set
+    num_neighbors : int
+        The number of neighbors for the knn algorithm
 
-# for i in range(50, 501, 50):
-#     create_vocabulary(i, 'imagedb_train/', train_folders, sift, 'vocabulary_'+str(i)+'.npy', True)
-#
-# v1 = np.array([1, 2, 3])
-# v2 = np.array([2, 5, 3])
-#
-# print(v1.shape)
-# print(euclidean_distance(v1, v2))
+    Returns
+    -------
+    prediction: int
+        The predicted class identifier
+    """
+    distances = []
+    for train_row_index in range(0, train_set.shape[1]):
+        train_row = train_set[train_row_index]
+        distance = euclidean_distance(test_row, train_row[:-1])
+        distances.append((train_row, distance))
+    distances.sort(key=lambda tup: tup[1])
+    neighbors = []
+    for i in range(num_neighbors):
+        neighbors.append(distances[i][0])
 
-# vocabular = np.load('vocabularies/vocabulary_50.npy')
-#
-# descr = extract_sift_features('test.jpg', sift)
-# bow = encode_bovw_descriptor(descr, vocabular)
+    neighbor_classes = [row[-1] for row in neighbors]
+    prediction = max(set(neighbor_classes), key=neighbor_classes.count)
 
-print()
+    return prediction
+
+
+def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_neighbors, sift_object, result_dataframe, verbose=False):
+    """Uses the k Nearest Neighbors algorithm to test an
+    image test set according to a training set encoded with
+    create_train_features.
+    This training set must be stored in a .npy file.
+    It extracts the parameters the training set was encoded
+    with (number of vocabulary words, normalization) from
+    the training set filename, in order to do the same
+    encoding to the test set, so it will not work with
+    training sets encoded with specifications other than
+    those of create_train_features.
+    The function returns a pandas DataFrame containing the
+    classification results.
+    In order for these results to be accurate, the test
+    folders must be provided with the same order as they
+    were provided in the training folders parameter of
+    other functions (for example create_train_features).
+
+    Parameters
+    ----------
+    train_set_path : str
+        The path from which the encoded training set will
+        be loaded
+    test_directory : str
+        The path of the directory that contains the test
+        class folders
+    test_folders : list
+        The list that contains the names of class folders
+        of the test set
+        They must be with the same order
+    num_neighbors : int
+        The number of nearest neighbors to be used for knn
+    sift_object : cv2.xfeatures2d_SIFT
+        The SIFT object that will be used by extract_sift_features
+    result_dataframe : pandas.core.frame.DataFrame
+        The pandas Dataframe that will contain the results of
+        the knn classification
+        It needs to have the following columns:
+        ['image_path', 'class', 'predicted_class', 'knn neighbors',
+         'vocabulary_words', 'normalization']
+    verbose: bool
+        Set as True if you want progress messages and a summary
+        of the database created to be printed
+        (False by default)
+
+    Returns
+    -------
+    result_dataframe : pandas.core.frame.DataFrame
+        The modified result DataFrame that contains the results
+        for classification with these parameters
+    """
+    head, tail = os.path.split(train_set_path)
+    if tail not in os.listdir(head):
+        print("This dataset does not exist. Please, specify a different path.")
+        exit(-1)
+
+    train = np.load(train_set_path)
+    n_words = int(''.join([s for s in train_set_path if s.isdigit()]))
+    voc_path = 'vocabularies/vocabulary_' + str(n_words) + '.npy'
+    name, extension = train_set_path.split('.')
+    normalize = name[-1] == 'n'
+    vocabulary = np.load(voc_path)
+
+    if verbose:
+        print('Loaded training set ', train_set_path)
+        print('Parameters extracted:')
+        print('n_words=', n_words)
+        print('normalize=', normalize)
+        print('Vocabulary loaded: ', voc_path)
+        print("Accessing test image folders...")
+        start = time.time()
+
+    n_images = 0
+    n_correct = 0
+    for folder, class_i in zip(test_folders, range(len(test_folders))):
+        folder_path = os.path.join(test_directory, folder)
+
+        files = os.listdir(folder_path)
+        for file in files:
+            n_images += 1
+            path = os.path.join(folder_path, file)
+            desc = extract_sift_features(path, sift_object)
+            bovw_desc = encode_bovw_descriptor(desc, vocabulary, normalize)
+            prediction = k_nearest_neighbors(train, bovw_desc, num_neighbors)
+            if prediction == class_i:
+                n_correct += 1
+
+            result_dataframe = result_dataframe.append(pd.Series([path, class_i, prediction, num_neighbors, n_words, normalize], index=result_dataframe.columns), ignore_index=True)
+
+    if verbose:
+        print('K Nearest Neighbors training completed.')
+        print('===========Summary===========')
+        print('Total time: ', round(time.time()-start, 2), ' s')
+        print('Size of training set: ', train.shape[0])
+        print('Number of test pictures: ', n_images)
+        print('Number of pictures correctly classified: ', n_correct)
+        print('Test accuracy: ', round(n_correct/n_images, 4)*100, '%')
+
+    return result_dataframe
