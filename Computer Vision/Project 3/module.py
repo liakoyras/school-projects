@@ -84,10 +84,15 @@ def create_feature_database(directory, folders, sift_object):
     return train_descriptors_db, n_images
 
 
-def create_vocabulary(k, train_directory, folders, sift_object, filename, verbose=False):
+def create_vocabulary(k, train_directory, folders, sift_object, verbose=False):
     """Uses k-means clustering in order to create a vocabulary
        for the BoVW model and saves it to a file inside the
        vocabularies directory.
+       This folder needs to be created manually before running
+       the finction for the first time.
+       The name of the file is vocabulary_k.npy, where k is
+       the number of words that it will contain.
+
 
     Parameters
     ----------
@@ -100,15 +105,12 @@ def create_vocabulary(k, train_directory, folders, sift_object, filename, verbos
         The list that contains the names of class folders
     sift_object : xfeatures2d_SIFT
         The SIFT object to be used with extract_sift_features()
-    filename: str
-        The name of the file where the vocabulary will be saved
-        The file extension should be .npy (numpy file)
-        If this file exists, the function will inform and exit
     verbose: bool
         Set as True if you want progress messages and a summary
-        of the vocabulary to be printed
+        of the vocabulary to be printed or False to disable them
         (False by default)
     """
+    filename = 'vocabulary_' + str(k) + '.npy'
     if filename in os.listdir('vocabularies'):
         print("This vocabulary already exists. Please, specify a different filename or use the existing vocabulary.")
         exit(-1)
@@ -174,7 +176,7 @@ def euclidean_distance(vector1, vector2):
         return np.sqrt(np.sum((vector1-vector2) ** 2, axis=1))
 
 
-def encode_bovw_descriptor(descriptors, vocabulary):
+def encode_bovw_descriptor(descriptors, vocabulary, normalize=True):
     """Creates a BoVW histogram according to a given vocabulary.
 
     Parameters
@@ -184,7 +186,10 @@ def encode_bovw_descriptor(descriptors, vocabulary):
         extracting algorithm like SIFT)
     vocabulary : ndarray
         The BoVW vocabulary
-
+    normalize : bool
+        Set to False in order to disable L2 norm normalization
+        or to True to allow it
+        (True by default)
     Returns
     -------
     bovw_descriptor: ndarray
@@ -199,17 +204,23 @@ def encode_bovw_descriptor(descriptors, vocabulary):
         index_min = np.argmin(distances)
         bovw_descriptor[0, index_min] += 1
 
+    if normalize:
+        norm = np.sqrt(np.sum(bovw_descriptor ** 2))
+        bovw_descriptor = bovw_descriptor / norm
+
     return bovw_descriptor
 
 
-def create_train_features(train_directory, folders, vocabulary_path, sift_object, verbose=False):
+def create_train_features(train_directory, folders, vocabulary_path, sift_object, normalize=True, verbose=False):
     """Uses a BoVW vocabulary to encode each image in a dataset.
     Also, it adds an integer label to each descriptor that
     corresponds to the class it belongs.
     The database created is saved on a .npy file, named
     bovw_encoded_descriptors_<number of words in vocabulary>
+    It will also have a _n in the end of the name if L2 norm
+    normalization was used.
     This is extracted from the vocabulary path, so use only
-    filenames like the ones exported from create_vocabulary
+    filenames like the ones exported from create_vocabulary.
 
     Parameters
     ----------
@@ -221,19 +232,15 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
         The path to the saved BoVW vocabulary
     sift_object : xfeatures2d_SIFT
         The SIFT object that will be used by extract_sift_features
+    normalize : bool
+        It will be used by encode_bovw_descriptor to allow L2 norm
+        normalization
+        Set to False to disable
+        (True by default)
     verbose: bool
         Set as True if you want progress messages and a summary
         of the database created to be printed
         (False by default)
-
-    Returns
-    -------
-    bovw_descriptors: ndarray
-        An ndarray containing the bovw descriptor for each image,
-        enriched with the class label
-        Each output descriptor is a vector of size equal to the
-        number of Visual Words in the vocabulary and a single
-        integer value that shows the class
     """
     head, tail = os.path.split(vocabulary_path)
     if tail not in os.listdir(head):
@@ -259,7 +266,7 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
                 n_images += 1
                 path = os.path.join(folder_path, file)
                 desc = extract_sift_features(path, sift_object)
-                bovw_desc = encode_bovw_descriptor(desc, vocabulary)
+                bovw_desc = encode_bovw_descriptor(desc, vocabulary, normalize)
                 bovw_desc = np.append(bovw_desc, [class_i])
                 # The following 2 lines reshape the ndarray to the proper size after append
                 # reduces it to a one dimensional array, so that it can be concatenated
@@ -273,6 +280,12 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
         n_words = [s for s in vocabulary_path if s.isdigit()]
         n_words = ''.join(n_words)
         filename = 'bovw_encoded_descriptors_'+str(n_words)
+
+        if normalize:
+            filename = filename + '_n.npy'
+        else:
+            filename = filename + '.npy'
+
         if verbose:
             end_cl = time.time()
             print("===Train Database Summary===")
@@ -290,8 +303,8 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
 train_folders = ['fighter_jet/', 'motorbike/', 'school_bus/', 'touring_bike/', 'airplane/', 'car_side/']
 sift = cv2.xfeatures2d_SIFT.create()
 
-# for vocab in os.listdir('vocabularies'):
-#     create_train_features('imagedb_train/', train_folders, 'vocabularies/'+vocab, sift, True)
+for vocab in os.listdir('vocabularies'):
+    create_train_features('imagedb_train/', train_folders, 'vocabularies/'+vocab, sift, True, True)
 
 # for i in range(50, 501, 50):
 #     create_vocabulary(i, 'imagedb_train/', train_folders, sift, 'vocabulary_'+str(i)+'.npy', True)
