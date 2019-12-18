@@ -1,4 +1,4 @@
-module m_7_segment_decoder (
+module m_7_segment_decoder_3 (
 	input logic [2:0] in_3_bits,
 	output logic [6:0] out_7_bits
 );

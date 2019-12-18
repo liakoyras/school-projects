@@ -87,11 +87,51 @@ set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+
+set_location_assignment PIN_R22 -to clock
+set_location_assignment PIN_R21 -to reset
+
+set_location_assignment PIN_L22 -to requests[0]
+set_location_assignment PIN_L21 -to requests[1]
+set_location_assignment PIN_M22 -to requests[2]
+set_location_assignment PIN_V12 -to requests[3]
+set_location_assignment PIN_W12 -to requests[4]
+set_location_assignment PIN_U12 -to requests[5]
+set_location_assignment PIN_U11 -to requests[6]
+set_location_assignment PIN_M2 -to requests[7]
+
+set_location_assignment PIN_J2 -to low_priority_out[0]
+set_location_assignment PIN_J1 -to low_priority_out[1]
+set_location_assignment PIN_H2 -to low_priority_out[2]
+set_location_assignment PIN_H1 -to low_priority_out[3]
+set_location_assignment PIN_F2 -to low_priority_out[4]
+set_location_assignment PIN_F1 -to low_priority_out[5]
+set_location_assignment PIN_E2 -to low_priority_out[6]
+
+set_location_assignment PIN_E1 -to requests_count[0]
+set_location_assignment PIN_H6 -to requests_count[1]
+set_location_assignment PIN_H5 -to requests_count[2]
+set_location_assignment PIN_H4 -to requests_count[3]
+set_location_assignment PIN_G3 -to requests_count[4]
+set_location_assignment PIN_D2 -to requests_count[5]
+set_location_assignment PIN_D1 -to requests_count[6]
+
+
+set_location_assignment PIN_R20 -to grants_8[0]
+set_location_assignment PIN_R19 -to grants_8[1]
+set_location_assignment PIN_U19 -to grants_8[2]
+set_location_assignment PIN_Y19 -to grants_8[3]
+set_location_assignment PIN_T18 -to grants_8[4]
+set_location_assignment PIN_V19 -to grants_8[5]
+set_location_assignment PIN_Y18 -to grants_8[6]
+set_location_assignment PIN_U18 -to grants_8[7]
+
 set_global_assignment -name SYSTEMVERILOG_FILE m_7_segment_decoder.sv
 set_global_assignment -name SYSTEMVERILOG_FILE m_3_to_8_decoder.sv
 set_global_assignment -name SYSTEMVERILOG_FILE round_robin.sv
 set_global_assignment -name SYSTEMVERILOG_FILE priority_register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE arbiter.sv
-set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
-set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

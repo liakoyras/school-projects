@@ -11,7 +11,7 @@ assign any_grant_o = (|(reqs_i))? 1'b1 : 1'b0 ;
 always_comb begin
 	cnt_o = 0;
 
-    for(int i=0; i<7; i=i+1) begin
+    for(int i=0; i<8; i=i+1) begin
         if(reqs_i[i]) begin
             cnt_o = cnt_o + 1;
 		end	

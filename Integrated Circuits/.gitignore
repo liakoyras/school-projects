@@ -1,5 +1,6 @@
 # Ignore files inside the work folder
 /*/work
 
-# Ignore .wlf files
+# Ignore modelsim .wlf and quartus .qpf files
 *.wlf
+*.qpf

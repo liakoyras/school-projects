@@ -28,13 +28,13 @@ priority_register p1 (
 	.q_o(low_priority)
 );
 
-m_7_segment_decoder d1 (
+m_7_segment_decoder_3 d1 (
 	.in_3_bits(low_priority),
 	.out_7_bits(low_priority_out)
 );
 
-m_7_segment_decoder d2 (
-	.in_3_bits(number_requests),
+m_7_segment_decoder_4 d2 (
+	.in_4_bits(number_requests),
 	.out_7_bits(requests_count)
 );
 
