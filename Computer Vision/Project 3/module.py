@@ -112,10 +112,7 @@ def create_vocabulary(k, train_directory, folders, sift_object, verbose=False):
         (False by default)
     """
     filename = 'vocabulary_' + str(k) + '.npy'
-    if filename in os.listdir('vocabularies'):
-        print("This vocabulary already exists. Please, specify a different filename or use the existing vocabulary.")
-        exit(-1)
-    else:
+    if filename not in os.listdir('vocabularies'):
         if verbose:
             print("Creating feature database from the images...")
             start = time.time()
@@ -148,6 +145,9 @@ def create_vocabulary(k, train_directory, folders, sift_object, verbose=False):
             print()
 
         np.save('vocabularies/'+filename, vocabulary)
+    else:
+        print("This vocabulary already exists. Please, specify a different filename or use the existing vocabulary.")
+        exit(-1)
 
 
 def euclidean_distance(vector1, vector2):
@@ -222,6 +222,7 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
     normalization was used.
     This is extracted from the vocabulary path, so use only
     filenames like the ones exported from create_vocabulary.
+    If the filename exists, the function will not do anything.
 
     Parameters
     ----------
@@ -248,57 +249,60 @@ def create_train_features(train_directory, folders, vocabulary_path, sift_object
         print("This vocabulary does not exist. Please, specify a different path.")
         exit(-1)
     else:
-        vocabulary = np.load(vocabulary_path)
-        if verbose:
-            print("Accessing train image folders...")
-            start = time.time()
-
-        n_images = 0
-        bovw_descs = np.zeros((0, vocabulary.shape[0]+1))
-        for folder, class_i in zip(folders, range(len(folders))):
-            folder_path = os.path.join(train_directory, folder)
-
-            if verbose:
-                print("Accessing images in ", folder_path)
-                folder_time = time.time()
-
-            files = os.listdir(folder_path)
-            for file in files:
-                n_images += 1
-                path = os.path.join(folder_path, file)
-                desc = extract_sift_features(path, sift_object)
-                bovw_desc = encode_bovw_descriptor(desc, vocabulary, normalize)
-                bovw_desc = np.append(bovw_desc, [class_i])
-                # The following 2 lines reshape the ndarray to the proper size after append
-                # reduces it to a one dimensional array, so that it can be concatenated
-                bovw_desc = bovw_desc[:, np.newaxis]
-                bovw_desc = bovw_desc.reshape((bovw_desc.shape[1], bovw_desc.shape[0]))
-                bovw_descs = np.concatenate((bovw_descs, bovw_desc), axis=0)
-
-            if verbose:
-                print("Encoded images in ", folder_path, " in ", round(time.time()-folder_time), " s")
-
         n_words = [s for s in vocabulary_path if s.isdigit()]
         n_words = ''.join(n_words)
-        filename = 'bovw_encoded_descriptors_'+str(n_words)
+        filename = 'bovw_encoded_descriptors_' + str(n_words)
 
         if normalize:
             filename = filename + '_n.npy'
         else:
             filename = filename + '.npy'
+        if filename not in os.listdir('train_dbs/'):
+            vocabulary = np.load(vocabulary_path)
+            if verbose:
+                print("Accessing train image folders...")
+                start = time.time()
 
-        if verbose:
-            end_cl = time.time()
-            print("===Train Database Summary===")
-            print("----------------------------")
-            print("Number of images used: ", n_images)
-            print("Vocabulary used: ", vocabulary_path)
-            print("Output file: ", filename)
-            print("Total time: ", round(end_cl - start, 2), " s")
-            print("========================")
-            print()
+            n_images = 0
+            bovw_descs = np.zeros((0, vocabulary.shape[0]+1))
+            for folder, class_i in zip(folders, range(len(folders))):
+                folder_path = os.path.join(train_directory, folder)
 
-        np.save('train_dbs/' + filename, bovw_descs)
+                if verbose:
+                    print("Accessing images in ", folder_path)
+                    folder_time = time.time()
+
+                files = os.listdir(folder_path)
+                for file in files:
+                    n_images += 1
+                    path = os.path.join(folder_path, file)
+                    desc = extract_sift_features(path, sift_object)
+                    bovw_desc = encode_bovw_descriptor(desc, vocabulary, normalize)
+                    bovw_desc = np.append(bovw_desc, [class_i])
+                    # The following 2 lines reshape the ndarray to the proper size after append
+                    # reduces it to a one dimensional array, so that it can be concatenated
+                    bovw_desc = bovw_desc[:, np.newaxis]
+                    bovw_desc = bovw_desc.reshape((bovw_desc.shape[1], bovw_desc.shape[0]))
+                    bovw_descs = np.concatenate((bovw_descs, bovw_desc), axis=0)
+
+                if verbose:
+                    print("Encoded images in ", folder_path, " in ", round(time.time()-folder_time), " s")
+
+            if verbose:
+                end_cl = time.time()
+                print("===Train Database Summary===")
+                print("----------------------------")
+                print("Number of images used: ", n_images)
+                print("Vocabulary used: ", vocabulary_path)
+                print("Output file: ", filename)
+                print("Total time: ", round(end_cl - start, 2), " s")
+                print("========================")
+                print()
+
+            np.save('train_dbs/' + filename, bovw_descs)
+        else:
+            print('This training database already exists. Try using different parameters.')
+            exit(-1)
 
 
 def k_nearest_neighbors(train_set, test_row, num_neighbors):
@@ -326,7 +330,7 @@ def k_nearest_neighbors(train_set, test_row, num_neighbors):
         The predicted class identifier
     """
     distances = []
-    for train_row_index in range(0, train_set.shape[1]):
+    for train_row_index in range(0, train_set.shape[0]):
         train_row = train_set[train_row_index]
         distance = euclidean_distance(test_row, train_row[:-1])
         distances.append((train_row, distance))
@@ -406,10 +410,6 @@ def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_n
 
     if verbose:
         print('Loaded training set ', train_set_path)
-        print('Parameters extracted:')
-        print('n_words=', n_words)
-        print('normalize=', normalize)
-        print('Vocabulary loaded: ', voc_path)
         print("Accessing test image folders...")
         start = time.time()
 
@@ -432,11 +432,39 @@ def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_n
 
     if verbose:
         print('K Nearest Neighbors training completed.')
+        print()
         print('===========Summary===========')
-        print('Total time: ', round(time.time()-start, 2), ' s')
+        print('vocabulary=: ', voc_path)
+        print('n_words=', n_words)
+        print('normalize=', normalize)
+        print('k= ', num_neighbors)
         print('Size of training set: ', train.shape[0])
         print('Number of test pictures: ', n_images)
         print('Number of pictures correctly classified: ', n_correct)
-        print('Test accuracy: ', round(n_correct/n_images, 4)*100, '%')
+        print('Test accuracy: ', round(n_correct*100/n_images, 4), '%')
+        print('Total time: ', round(time.time() - start, 2), ' s')
+        print()
+        print()
 
     return result_dataframe
+
+
+def train_svm(training_set, train_class, kernel, epsilon):
+    svm = cv2.ml.SVM_create()
+    svm.setType(cv2.ml.SVM_C_SVC)
+
+    if kernel == 'RBF':
+        svm.setKernel(cv2.ml.SVM_RBF)
+    elif kernel == 'LINEAR':
+        svm.setKernel(cv2.ml.SVM_LINEAR)
+    elif kernel == 'CHI2':
+        svm.setKernel(cv2.ml.SVM_CHI2)
+    elif kernel == 'INTER':
+        svm.setKernel(cv2.ml.SVM_INTER)
+
+    svm.setTermCriteria((cv2.TERM_CRITERIA_EPS, 100, epsilon))
+
+    labels = [train_class == i for i in training_set[:, -1:]]
+    svm.trainAuto(training_set[:, :-1].astype(np.float32), cv2.ml.ROW_SAMPLE, labels)
+    svm.save('svms/svm_'+str(train_class))
+    

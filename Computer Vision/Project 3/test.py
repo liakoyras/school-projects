@@ -10,13 +10,16 @@ depending on the class the image belongs.
 """
 from module import *
 
-test_folders = ['fighter_jet/', 'motorbike/', 'school_bus/', 'touring_bike/', 'airplane/', 'car_side/']
+test_folders = ['fighter_jet', 'motorbike', 'school_bus', 'touring_bike', 'airplane', 'car_side']
 sift = cv2.xfeatures2d_SIFT.create()
-df = pd.DataFrame(columns=['image_path', 'class', 'predicted_class', 'knn neighbors', 'vocabulary_words', 'normalization'])
+df = pd.DataFrame(columns=['image_path', 'class', 'predicted_class', 'knn_neighbors', 'vocabulary_words', 'normalization'])
 
-for train in os.listdir('train_dbs/'):
-    for k in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 17, 21, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 200]:
-        df = test_k_nearest_neighbors(train, 'imagedb_test', test_folders, k, sift, df, True)
+start = time.time()
+for train in os.listdir('train_dbs'):
+    ks = [2, 3, 5, 7, 9, 11, 17, 25, 35, 45, 55, 65]
+    for k in ks:
+        df = test_k_nearest_neighbors('train_dbs/'+train, 'imagedb_test', test_folders, k, sift, df, True)
 
-df.to_csv('results_knn.csv')
+df.to_csv('results_knn_1.csv')
 
+print(time.time()-start)
