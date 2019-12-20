@@ -14,12 +14,11 @@ test_folders = ['fighter_jet', 'motorbike', 'school_bus', 'touring_bike', 'airpl
 sift = cv2.xfeatures2d_SIFT.create()
 df = pd.DataFrame(columns=['image_path', 'class', 'predicted_class', 'knn_neighbors', 'vocabulary_words', 'normalization'])
 
-start = time.time()
-for train in os.listdir('train_dbs'):
-    ks = [2, 3, 5, 7, 9, 11, 17, 25, 35, 45, 55, 65]
-    for k in ks:
-        df = test_k_nearest_neighbors('train_dbs/'+train, 'imagedb_test', test_folders, k, sift, df, True)
+# ks = [2, 3, 5, 7, 9, 11, 17, 25, 35, 45, 55, 65]
+# for train in os.listdir('train_dbs'):
+#     for k in ks:
+#         df = test_k_nearest_neighbors('train_dbs/'+train, 'imagedb_test', test_folders, k, sift, df, True)
+#
+# df.to_csv('results_knn_1.csv')
 
-df.to_csv('results_knn_1.csv')
-
-print(time.time()-start)
+# print(time.time()-start)

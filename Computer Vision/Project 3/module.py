@@ -449,22 +449,68 @@ def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_n
     return result_dataframe
 
 
-def train_svm(training_set, train_class, kernel, epsilon):
+def train_svm(training_set, train_class, kernel, epsilon, filename):
+    """Trains an SVM to classify an image using the
+    provided training set.
+    The SVM is saved in a file inside the svms folder.
+
+    Parameters
+    ----------
+    training_set : ndarray
+        A 2D array containing the training set
+        The last column is assumed to be the label
+    train_class : int
+        The unique class identifier that defines
+        the class and distinguises it from the
+        other classes
+    kernel : str
+        The kernel that will be used for the SVM
+    epsilon : float
+        The error margin that will be used as one
+        of the SVM termination criteria
+    filename : str
+        The name of the file to which the SVM will
+        be saved
+    """
     svm = cv2.ml.SVM_create()
     svm.setType(cv2.ml.SVM_C_SVC)
 
     if kernel == 'RBF':
         svm.setKernel(cv2.ml.SVM_RBF)
-    elif kernel == 'LINEAR':
-        svm.setKernel(cv2.ml.SVM_LINEAR)
     elif kernel == 'CHI2':
         svm.setKernel(cv2.ml.SVM_CHI2)
     elif kernel == 'INTER':
         svm.setKernel(cv2.ml.SVM_INTER)
+    elif kernel == 'SIGMOID':
+        svm.setKernel(cv2.ml.SVM_SIGMOID)
 
     svm.setTermCriteria((cv2.TERM_CRITERIA_EPS, 100, epsilon))
 
-    labels = [train_class == i for i in training_set[:, -1:]]
+    labels = np.array([int((train_class == i)) for i in training_set[:, -1]])
     svm.trainAuto(training_set[:, :-1].astype(np.float32), cv2.ml.ROW_SAMPLE, labels)
-    svm.save('svms/svm_'+str(train_class))
-    
+
+    svm.save('svms/'+filename)
+
+
+def svm_one_vs_all(svms_path, classes, test_descriptor):
+    """Uses a number of pretrained SVMs to classify an
+    image into the same number of classes using an one
+    versus all scheme.
+    It calculates an array that contains the distances
+    from the hyperplane of each SVM, so that the
+    prediction is the class with the minimum distance.
+
+    Parameters
+    ----------
+    svms_path : str
+        The path to the directory containing the SVMs
+    train_class : int
+       The unique class identifier that defines
+       the class and distinguises it from the
+       other classes
+    kernel : str
+       The kernel that will be used for the SVM
+    epsilon : float
+       The error margin that will be used as one
+       of the SVM termination criteria
+    """
