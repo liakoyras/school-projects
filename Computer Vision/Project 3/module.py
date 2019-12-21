@@ -35,7 +35,7 @@ def extract_sift_features(image_path, sift_object):
 
     Returns
     -------
-    descriptors: ndarray
+    descriptors: numpy.ndarray
         An ndarray containing the descriptors for the image
         Each descriptor is a 128-dimensional vector
     """
@@ -63,7 +63,7 @@ def create_feature_database(directory, folders, sift_object):
 
     Returns
     -------
-    train_descriptors_db: ndarray
+    train_descriptors_db: numpy.ndarray
         An ndarray containing the descriptors for all images inside
         the `directory` folder
         Each descriptor is a 128-dimensional vector
@@ -160,16 +160,16 @@ def euclidean_distance(vector1, vector2):
     vector1: float
         The refference vector
 
-    vector2: float or ndarray
+    vector2: numpy.ndarray
         Either the vector for which the distance from vector1
         will be calculated or an array of vectors for which the
         distance from vector1 to each element will be calculated
 
     Returns
     -------
-    distance: float or ndarray
+    distance: float or numpy.ndarray
         The distance between the two input vectors or an array of
-        distances between the first input vector and all
+        distances between the first input vector and all of the
     """
     if len(vector2.shape) == 1:
         return np.sqrt(np.sum((vector1-vector2) ** 2))
@@ -182,10 +182,10 @@ def encode_bovw_descriptor(descriptors, vocabulary, normalize=True):
 
     Parameters
     ----------
-    descriptors : ndarray
+    descriptors : numpy.ndarray
         The descriptors of an image (calculated with a feature
         extracting algorithm like SIFT)
-    vocabulary : ndarray
+    vocabulary : numpy.ndarray
         The BoVW vocabulary
     normalize : bool
         Set to False in order to disable L2 norm normalization
@@ -193,7 +193,7 @@ def encode_bovw_descriptor(descriptors, vocabulary, normalize=True):
         (True by default)
     Returns
     -------
-    bovw_descriptor: ndarray
+    bovw_descriptor: numpy.ndarray
         An ndarray containing the histograms for each of the
         input descriptors
         Each output descriptor is a vector of size equal to the
@@ -314,11 +314,11 @@ def k_nearest_neighbors(train_set, test_row, num_neighbors):
 
     Parameters
     ----------
-    train_set : ndarray
+    train_set : numpy.ndarray
         The training set containing the encoded descriptors
         The last element of each descriptor is assumed to be
         the class identifier
-    test_row : ndarray
+    test_row : numpy.ndarray
         A one dimensional ndarray that will be checked against
         the training set
     num_neighbors : int
@@ -387,7 +387,7 @@ def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_n
          'vocabulary_words', 'normalization']
     verbose: bool
         Set as True if you want progress messages and a summary
-        of the database created to be printed
+        of algorithm results
         (False by default)
 
     Returns
@@ -449,14 +449,14 @@ def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_n
     return result_dataframe
 
 
-def train_svm(training_set, train_class, kernel, epsilon, filename):
+def train_svm(training_set, train_class, kernel, epsilon, file_path):
     """Trains an SVM to classify an image using the
     provided training set.
-    The SVM is saved in a file inside the svms folder.
+    The SVM is saved in a file with the given path.
 
     Parameters
     ----------
-    training_set : ndarray
+    training_set : numpy.ndarray
         A 2D array containing the training set
         The last column is assumed to be the label
     train_class : int
@@ -468,9 +468,9 @@ def train_svm(training_set, train_class, kernel, epsilon, filename):
     epsilon : float
         The error margin that will be used as one
         of the SVM termination criteria
-    filename : str
-        The name of the file to which the SVM will
-        be saved
+    file_path : str
+        The path and name of the file to which the
+        SVM will be saved
     """
     svm = cv2.ml.SVM_create()
     svm.setType(cv2.ml.SVM_C_SVC)
@@ -489,28 +489,201 @@ def train_svm(training_set, train_class, kernel, epsilon, filename):
     labels = np.array([int((train_class == i)) for i in training_set[:, -1]])
     svm.trainAuto(training_set[:, :-1].astype(np.float32), cv2.ml.ROW_SAMPLE, labels)
 
-    svm.save('svms/'+filename)
+    svm.save(file_path)
 
 
-def svm_one_vs_all(svms_path, classes, test_descriptor):
+def load_svm(svm_path, svm_parameters):
+    """Loads a pretrained svm from a given directory
+
+    Parameters
+    ----------
+    svm_path : str
+        The path to the file containing the SVM
+    svm_parameters : tuple
+       A tuple containing the parameters used to train
+       the SVMs in the following order:
+       (kernel, epsilon)
+       kernel : str
+       epsilon : float (scientific notation or 0.1)
+       These are used to load the SVM into a cv2.ml.SVM
+       object with the same characteristics
+
+    Returns
+    -------
+    svm : cv2.ml.SVM
+        The SVM loaded from the file
+    """
+    svm = cv2.ml.SVM_create()
+    # svm.setType(cv2.ml.SVM_C_SVC)
+    #
+    # if svm_parameters[0] == 'RBF':
+    #     svm.setKernel(cv2.ml.SVM_RBF)
+    # elif svm_parameters[0] == 'CHI2':
+    #     svm.setKernel(cv2.ml.SVM_CHI2)
+    # elif svm_parameters[0] == 'INTER':
+    #     svm.setKernel(cv2.ml.SVM_INTER)
+    # elif svm_parameters[0] == 'SIGMOID':
+    #     svm.setKernel(cv2.ml.SVM_SIGMOID)
+    #
+    # svm.setTermCriteria((cv2.TERM_CRITERIA_EPS, 100, svm_parameters[1]))
+
+    svm = svm.load(svm_path)
+
+    return svm
+
+
+def svm_one_vs_all(svms_path, folders, test_image_path, train_parameters, sift_object):
     """Uses a number of pretrained SVMs to classify an
     image into the same number of classes using an one
     versus all scheme.
+    It deduces a filename for a given set of parameters
+    that has the following format:
+    'svm_<class identifier>_<vocabulary words number>words_
+    norm<0 or 1>_<kernel type>_<termination epsilon>
     It calculates an array that contains the distances
     from the hyperplane of each SVM, so that the
-    prediction is the class with the minimum distance.
+    prediction is the class with the minimum distance
+    and returns the predicted class.
 
     Parameters
     ----------
     svms_path : str
         The path to the directory containing the SVMs
-    train_class : int
-       The unique class identifier that defines
-       the class and distinguises it from the
-       other classes
-    kernel : str
-       The kernel that will be used for the SVM
-    epsilon : float
-       The error margin that will be used as one
-       of the SVM termination criteria
+    folders : list
+       The list of folders containing images from
+       different classes
+    test_image_path : str
+       The path to the image that we want to classify
+       with the SVMs
+    train_parameters : tuple
+       A tuple containing the parameters used to train
+       the SVMs in the following order:
+       (number of vocabulary words, normalization,
+       kernel, epsilon)
+       number of vocabulary words : int
+       normalization : 1 or 0
+       kernel : str
+       epsilon : float
+       These are going to be used to encode the test
+       image the same way as the descriptors that
+       trained the SVM
+    sift_object : cv2.xfeatures2d_SIFT
+        The object to be used by extract_sift_features
+
+    Returns
+    -------
+    predicted_class : int
+        The unique class identifier predicted for the
+        test image
     """
+    vocabulary = np.load('vocabularies/vocabulary_'+str(train_parameters[0])+'.npy')
+    predictions = []
+    for class_i in range(len(folders)):
+        filename = 'svm_'+str(class_i)+'_'+str(train_parameters[0])+'words_'+'norm'+str(train_parameters[1])+'_'+train_parameters[2]+'_'+str(train_parameters[3])
+
+        if filename in os.listdir(svms_path):
+            svm = cv2.ml.SVM_create()
+            svm = svm.load(svms_path + filename)
+            # svm = load_svm(svms_path + filename, (train_parameters[2], train_parameters[3]))
+
+            desc = extract_sift_features(test_image_path, sift_object)
+            bovw_desc = encode_bovw_descriptor(desc, vocabulary, train_parameters[1] == 1)
+            prediction = svm.predict(bovw_desc.astype(np.float32), flags=cv2.ml.STAT_MODEL_RAW_OUTPUT)
+
+            predictions.append(prediction[1])
+        else:
+            print('There is not an existing SVM file with these parameters.')
+            print('Check if you used the correct file name specifications or create an svm using the train_svm function.')
+            exit(-1)
+
+    predicted_class = predictions.index(min(predictions))
+
+    return predicted_class
+
+
+def test_svms(svms_path, test_directory, test_folders, train_parameters, sift_object, result_dataframe, verbose=False):
+    """Uses the one versus all SVM scheme to test an
+    image test set against pretrained SVMs (created using
+    the train_svm function).
+    It uses the train parameters provided, in order to do
+    the same encoding to the test set.
+    The function returns a pandas DataFrame containing the
+    classification results.
+    In order for these results to be accurate, the test
+    folders must be provided with the same order as they
+    were provided in the respective class folders parameter
+    of other functions (for example svm_one_vs_all).
+
+    Parameters
+    ----------
+    svms_path : str
+        The path to the directory containing the SVMs
+    test_directory : str
+        The path of the directory that contains the test
+        class folders
+    test_folders : list
+        The list that contains the names of class folders
+        of the test set
+        They must be with the same order
+    train_parameters : tuple
+       A tuple containing the parameters used to train
+       the SVMs in the following order:
+       (number of vocabulary words, normalization,
+       kernel, epsilon)
+       See help(svm_one_vs_all) for more info
+    sift_object : cv2.xfeatures2d_SIFT
+        The SIFT object that will be used by extract_sift_features
+    result_dataframe : pandas.core.frame.DataFrame
+        The pandas Dataframe that will contain the results of
+        the knn classification
+        It needs to have the following columns:
+        ['image_path', 'class', 'predicted_class', 'knn neighbors',
+         'vocabulary_words', 'normalization']
+    verbose: bool
+        Set as True if you want progress messages and a summary
+        of the algorithm results to be printed
+        (False by default)
+
+    Returns
+    -------
+    result_dataframe : pandas.core.frame.DataFrame
+        The modified result DataFrame that contains the results
+        for classification with these parameters
+    """
+    if verbose:
+        print("Accessing test image folders...")
+        start = time.time()
+
+    n_images = 0
+    n_correct = 0
+    for folder, class_i in zip(test_folders, range(len(test_folders))):
+        folder_path = test_directory+'/'+folder
+
+        files = os.listdir(folder_path)
+        for file in files:
+            n_images += 1
+            path = folder_path+'/'+file
+            prediction = svm_one_vs_all(svms_path, test_folders, path, train_parameters, sift_object)
+            if prediction == class_i:
+                n_correct += 1
+
+            result_dataframe = result_dataframe.append(
+                pd.Series([path, class_i, prediction, train_parameters[0], train_parameters[1] == 1, train_parameters[2], train_parameters[3]],
+                          index=result_dataframe.columns), ignore_index=True)
+
+    if verbose:
+        print('One vs All SVM prediction completed.')
+        print()
+        print('===========Summary===========')
+        print('n_words=', train_parameters[0])
+        print('normalize=', train_parameters[1] == 1)
+        print('kernel= ', train_parameters[2])
+        print('epsilon= ', train_parameters[3])
+        print('Number of test pictures: ', n_images)
+        print('Number of pictures correctly classified: ', n_correct)
+        print('Test accuracy: ', round(n_correct*100/n_images, 4), '%')
+        print('SVM time: ', round(time.time() - start, 2), ' s')
+        print()
+        print()
+
+    return result_dataframe
