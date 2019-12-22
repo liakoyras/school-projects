@@ -345,6 +345,117 @@ def k_nearest_neighbors(train_set, test_row, num_neighbors):
     return prediction
 
 
+def train_svm(training_set, train_class, kernel, epsilon, file_path):
+    """Trains an SVM to classify an image using the
+    provided training set.
+    The SVM is saved in a file with the given path.
+
+    Parameters
+    ----------
+    training_set : numpy.ndarray
+        A 2D array containing the training set
+        The last column is assumed to be the label
+    train_class : int
+        The unique class identifier that defines
+        the class and distinguises it from the
+        other classes
+    kernel : str
+        The kernel that will be used for the SVM
+    epsilon : float
+        The error margin that will be used as one
+        of the SVM termination criteria
+    file_path : str
+        The path and name of the file to which the
+        SVM will be saved
+    """
+    svm = cv2.ml.SVM_create()
+    svm.setType(cv2.ml.SVM_C_SVC)
+
+    if kernel == 'RBF':
+        svm.setKernel(cv2.ml.SVM_RBF)
+    elif kernel == 'CHI2':
+        svm.setKernel(cv2.ml.SVM_CHI2)
+    elif kernel == 'INTER':
+        svm.setKernel(cv2.ml.SVM_INTER)
+    elif kernel == 'SIGMOID':
+        svm.setKernel(cv2.ml.SVM_SIGMOID)
+
+    svm.setTermCriteria((cv2.TERM_CRITERIA_EPS, 100, epsilon))
+
+    labels = np.array([int((train_class == i)) for i in training_set[:, -1]])
+    svm.trainAuto(training_set[:, :-1].astype(np.float32), cv2.ml.ROW_SAMPLE, labels)
+
+    svm.save(file_path)
+
+
+def svm_one_vs_all(svms_path, folders, test_image_path, train_parameters, sift_object):
+    """Uses a number of pretrained SVMs to classify an
+    image into the same number of classes using an one
+    versus all scheme.
+    It deduces a filename for a given set of parameters
+    that has the following format:
+    'svm_<class identifier>_<vocabulary words number>words_
+    norm<0 or 1>_<kernel type>_<termination epsilon>
+    It calculates an array that contains the distances
+    from the hyperplane of each SVM, so that the
+    prediction is the class with the minimum distance
+    and returns the predicted class.
+
+    Parameters
+    ----------
+    svms_path : str
+        The path to the directory containing the SVMs
+    folders : list
+       The list of folders containing images from
+       different classes
+    test_image_path : str
+       The path to the image that we want to classify
+       with the SVMs
+    train_parameters : tuple
+       A tuple containing the parameters used to train
+       the SVMs in the following order:
+       (number of vocabulary words, normalization,
+       kernel, epsilon)
+       number of vocabulary words : int
+       normalization : 1 or 0
+       kernel : str
+       epsilon : float
+       These are going to be used to encode the test
+       image the same way as the descriptors that
+       trained the SVM
+    sift_object : cv2.xfeatures2d_SIFT
+        The object to be used by extract_sift_features
+
+    Returns
+    -------
+    predicted_class : int
+        The unique class identifier predicted for the
+        test image
+    """
+    vocabulary = np.load('vocabularies/vocabulary_'+str(train_parameters[0])+'.npy')
+    predictions = []
+    for class_i in range(len(folders)):
+        filename = 'svm_'+str(class_i)+'_'+str(train_parameters[0])+'words_'+'norm'+str(train_parameters[1])+'_'+train_parameters[2]+'_'+str(train_parameters[3])
+
+        if filename in os.listdir(svms_path):
+            svm = cv2.ml.SVM_create()
+            svm = svm.load(svms_path + filename)
+
+            desc = extract_sift_features(test_image_path, sift_object)
+            bovw_desc = encode_bovw_descriptor(desc, vocabulary, train_parameters[1] == 1)
+            prediction = svm.predict(bovw_desc.astype(np.float32), flags=cv2.ml.STAT_MODEL_RAW_OUTPUT)
+
+            predictions.append(prediction[1])
+        else:
+            print('There is not an existing SVM file with these parameters.')
+            print('Check if you used the correct file name specifications or create an svm using the train_svm function.')
+            exit(-1)
+
+    predicted_class = predictions.index(min(predictions))
+
+    return predicted_class
+
+
 def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_neighbors, sift_object, result_dataframe, verbose=False):
     """Uses the k Nearest Neighbors algorithm to test an
     image test set according to a training set encoded with
@@ -447,158 +558,6 @@ def test_k_nearest_neighbors(train_set_path, test_directory, test_folders, num_n
         print()
 
     return result_dataframe
-
-
-def train_svm(training_set, train_class, kernel, epsilon, file_path):
-    """Trains an SVM to classify an image using the
-    provided training set.
-    The SVM is saved in a file with the given path.
-
-    Parameters
-    ----------
-    training_set : numpy.ndarray
-        A 2D array containing the training set
-        The last column is assumed to be the label
-    train_class : int
-        The unique class identifier that defines
-        the class and distinguises it from the
-        other classes
-    kernel : str
-        The kernel that will be used for the SVM
-    epsilon : float
-        The error margin that will be used as one
-        of the SVM termination criteria
-    file_path : str
-        The path and name of the file to which the
-        SVM will be saved
-    """
-    svm = cv2.ml.SVM_create()
-    svm.setType(cv2.ml.SVM_C_SVC)
-
-    if kernel == 'RBF':
-        svm.setKernel(cv2.ml.SVM_RBF)
-    elif kernel == 'CHI2':
-        svm.setKernel(cv2.ml.SVM_CHI2)
-    elif kernel == 'INTER':
-        svm.setKernel(cv2.ml.SVM_INTER)
-    elif kernel == 'SIGMOID':
-        svm.setKernel(cv2.ml.SVM_SIGMOID)
-
-    svm.setTermCriteria((cv2.TERM_CRITERIA_EPS, 100, epsilon))
-
-    labels = np.array([int((train_class == i)) for i in training_set[:, -1]])
-    svm.trainAuto(training_set[:, :-1].astype(np.float32), cv2.ml.ROW_SAMPLE, labels)
-
-    svm.save(file_path)
-
-
-def load_svm(svm_path, svm_parameters):
-    """Loads a pretrained svm from a given directory
-
-    Parameters
-    ----------
-    svm_path : str
-        The path to the file containing the SVM
-    svm_parameters : tuple
-       A tuple containing the parameters used to train
-       the SVMs in the following order:
-       (kernel, epsilon)
-       kernel : str
-       epsilon : float (scientific notation or 0.1)
-       These are used to load the SVM into a cv2.ml.SVM
-       object with the same characteristics
-
-    Returns
-    -------
-    svm : cv2.ml.SVM
-        The SVM loaded from the file
-    """
-    svm = cv2.ml.SVM_create()
-    # svm.setType(cv2.ml.SVM_C_SVC)
-    #
-    # if svm_parameters[0] == 'RBF':
-    #     svm.setKernel(cv2.ml.SVM_RBF)
-    # elif svm_parameters[0] == 'CHI2':
-    #     svm.setKernel(cv2.ml.SVM_CHI2)
-    # elif svm_parameters[0] == 'INTER':
-    #     svm.setKernel(cv2.ml.SVM_INTER)
-    # elif svm_parameters[0] == 'SIGMOID':
-    #     svm.setKernel(cv2.ml.SVM_SIGMOID)
-    #
-    # svm.setTermCriteria((cv2.TERM_CRITERIA_EPS, 100, svm_parameters[1]))
-
-    svm = svm.load(svm_path)
-
-    return svm
-
-
-def svm_one_vs_all(svms_path, folders, test_image_path, train_parameters, sift_object):
-    """Uses a number of pretrained SVMs to classify an
-    image into the same number of classes using an one
-    versus all scheme.
-    It deduces a filename for a given set of parameters
-    that has the following format:
-    'svm_<class identifier>_<vocabulary words number>words_
-    norm<0 or 1>_<kernel type>_<termination epsilon>
-    It calculates an array that contains the distances
-    from the hyperplane of each SVM, so that the
-    prediction is the class with the minimum distance
-    and returns the predicted class.
-
-    Parameters
-    ----------
-    svms_path : str
-        The path to the directory containing the SVMs
-    folders : list
-       The list of folders containing images from
-       different classes
-    test_image_path : str
-       The path to the image that we want to classify
-       with the SVMs
-    train_parameters : tuple
-       A tuple containing the parameters used to train
-       the SVMs in the following order:
-       (number of vocabulary words, normalization,
-       kernel, epsilon)
-       number of vocabulary words : int
-       normalization : 1 or 0
-       kernel : str
-       epsilon : float
-       These are going to be used to encode the test
-       image the same way as the descriptors that
-       trained the SVM
-    sift_object : cv2.xfeatures2d_SIFT
-        The object to be used by extract_sift_features
-
-    Returns
-    -------
-    predicted_class : int
-        The unique class identifier predicted for the
-        test image
-    """
-    vocabulary = np.load('vocabularies/vocabulary_'+str(train_parameters[0])+'.npy')
-    predictions = []
-    for class_i in range(len(folders)):
-        filename = 'svm_'+str(class_i)+'_'+str(train_parameters[0])+'words_'+'norm'+str(train_parameters[1])+'_'+train_parameters[2]+'_'+str(train_parameters[3])
-
-        if filename in os.listdir(svms_path):
-            svm = cv2.ml.SVM_create()
-            svm = svm.load(svms_path + filename)
-            # svm = load_svm(svms_path + filename, (train_parameters[2], train_parameters[3]))
-
-            desc = extract_sift_features(test_image_path, sift_object)
-            bovw_desc = encode_bovw_descriptor(desc, vocabulary, train_parameters[1] == 1)
-            prediction = svm.predict(bovw_desc.astype(np.float32), flags=cv2.ml.STAT_MODEL_RAW_OUTPUT)
-
-            predictions.append(prediction[1])
-        else:
-            print('There is not an existing SVM file with these parameters.')
-            print('Check if you used the correct file name specifications or create an svm using the train_svm function.')
-            exit(-1)
-
-    predicted_class = predictions.index(min(predictions))
-
-    return predicted_class
 
 
 def test_svms(svms_path, test_directory, test_folders, train_parameters, sift_object, result_dataframe, verbose=False):
