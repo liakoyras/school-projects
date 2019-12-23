@@ -1,7 +1,4 @@
 .idea
-imagedb_test/
-imagedb_train/
 venv/
-test.jpg
 __pycache__/
-svms/
+.ipynb_checkpoints/
