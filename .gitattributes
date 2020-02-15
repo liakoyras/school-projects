@@ -1,1 +1,5 @@
+# Override some svm files that generated with a .1 extension
 *.1 linguist-generated
+
+# Have linguist to not count jupyter notebook files. A duplicate in Python is added to allow for more accurate language composition analysis
+*.ipynb linguist-generated
