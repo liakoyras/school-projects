@@ -17,9 +17,10 @@ This is contains the Python projects i did for the Computer Vision course, inclu
 This is simple Assembly program for the ARM Cortex-M0+ processor that does an arithmetic operation based on the operation the user specifies and encodes the result to be displayed in 7-segment displays.<br>
 [Jump to the code](./Microprocessors)
 
-### Integrated Circuits
-This contains a multitude of System Verilog Projects I did for the Integrated Circuits course and labs, covering topics like design and verification.<br>
-[Jump to the code](<./Integrated Circuits>)
+### Integrated Circuits-VLSI Systems
+This contains a multitude of System Verilog Projects I did for the those two courses (for which the latter is an expansion on the first) and their corresponding labs, covering topics like integrated circuits design and verification.<br>
+[Jump to the code for IC](<./Integrated Circuits>)
+[Jump to the code for VLSI](<./VLSI Systems>)
 
 ### Software Engineering (Unispace)
 This is a project that the whole of the class worked on for the duration of the course. It is a web-based university management software, for use by students, faculty and administrators.<br>
