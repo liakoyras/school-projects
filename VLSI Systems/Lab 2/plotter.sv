@@ -1,7 +1,7 @@
 module plotter(
 	input logic [9:0] rows,
 	input logic [9:0] columns,
-	inout logic [7:0] character,
+	input logic [7:0] character,
 	output logic [3:0] data_red,
 	output logic [3:0] data_green,
 	output logic [3:0] data_blue
@@ -16,17 +16,17 @@ always_comb begin
 		data_blue = 4'b0000;
 	end else begin
 		// plotting logic goes here
-		if(character == 2'h2d) begin
+		if(character == 8'b00101110) begin // hex: 2d
 			data_red = 4'b1111;
 			data_green = 4'b0000;
 			data_blue = 4'b0000;
 		end else begin
-			if(character == 2'h32) begin
+			if(character == 8'b00110010) begin // hex: 32
 				data_red = 4'b0000;
 				data_green = 4'b0000;
 				data_blue = 4'b1111;
 			end else begin
-				if(character == 2'34) begin
+				if(character == 8'b00110100) begin // hex: 34
 					data_red = 4'b0000;
 					data_green = 4'b1111;
 					data_blue = 4'b0000;

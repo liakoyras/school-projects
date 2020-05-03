@@ -3,7 +3,7 @@ module keyboard (
 	input rst,
 	input kData,
 	input kClock,
-	output [7:0] char
+	output [7:0] character
 );
 
 // keyboard clock edge detection
@@ -56,7 +56,7 @@ always_ff @(posedge clk, negedge rst) begin
 	end else begin
 		if(clock_falling) begin
 			if(period_counter < 10)
-				period_counter <= period_counter + 1;
+				period_counter <= period_counter + 1'b1;
 			if(period_counter == 10)
 				period_counter <= 0;
 		end
@@ -66,9 +66,9 @@ end
 // send the signal to other modules
 always_comb begin
 	if(period_counter==10)
-		char = data_sequence[8:1];
+		character = data_sequence[8:1];
 	else
-		char = 8'b00000000;
+		character = 8'b00000000;
 end
 
 endmodule

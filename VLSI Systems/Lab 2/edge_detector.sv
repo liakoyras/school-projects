@@ -18,7 +18,7 @@ always_ff @(posedge clk, negedge rst) begin
 		y <= x;
 		z <= y;
 	end
-ends
+end
 
 // edge detection
 assign rising = y & (~z);
