@@ -1,0 +1,160 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Users\ilias\Desktop\TODO\school-projects\VLSI Systems\Lab 2
+vedge_detector
+Z1 DXx6 sv_std 3 std 0 22 F[19LRNL:5;XmIFh[XOPn1
+!i10b 1
+Z2 !s100 lCX1nbHARLVUgV54c[H?b0
+Z3 IBMQn@MQzi55<nBfhiZ^bn2
+Z4 Vnhn2=>o[VWS466ZJEEXBU3
+Z5 !s105 edge_detector_sv_unit
+S1
+Z6 dC:\Users\ilias\Desktop\TODO\school-projects\VLSI Systems\Lab 2
+Z7 w1588512319
+Z8 8edge_detector.sv
+Z9 Fedge_detector.sv
+L0 1
+Z10 OV;L;10.1d;51
+r1
+!s85 0
+31
+Z11 !s108 1588519918.150000
+Z12 !s107 edge_detector.sv|keyboard.sv|keyboard_tb.sv|
+Z13 !s90 -reportprogress|300|keyboard_tb.sv|keyboard.sv|edge_detector.sv|
+!s101 -O0
+o-O0
+vkeyboard
+R1
+!i10b 1
+!s100 @TM]hN06Abi;9RjiiNfgj2
+I;=c`ai;X8[zzT?83bUPLO1
+Z14 VR`4H3hR^8Z9M66lN8XEjJ0
+Z15 !s105 keyboard_sv_unit
+S1
+R6
+w1588519913
+Z16 8keyboard.sv
+Z17 Fkeyboard.sv
+L0 1
+R10
+r1
+!s85 0
+31
+R11
+R12
+R13
+!s101 -O0
+o-O0
+vkeyboard_tb
+R1
+!i10b 1
+Z18 !s100 inNPna[DRecoAU[?7>;i01
+Z19 I<HJSO8Fe]l?m?H3am`=B13
+Z20 VoMnCKU=RlPOB`aK4>k9PP3
+Z21 !s105 keyboard_tb_sv_unit
+S1
+R6
+Z22 w1588519421
+Z23 8keyboard_tb.sv
+Z24 Fkeyboard_tb.sv
+L0 1
+R10
+r1
+!s85 0
+31
+R11
+R12
+R13
+!s101 -O0
+o-O0
+vmain
+R1
+Z25 !s100 2_PcPZ;8XJ<U1fL68D5882
+Z26 IaPmXYWIMGXzbK=^gDnGIG3
+Z27 Ve=W`ccOK3;mJ;i=>NnB9C2
+Z28 !s105 main_sv_unit
+S1
+R6
+Z29 w1588512616
+Z30 8main.sv
+Z31 Fmain.sv
+L0 1
+R10
+r1
+31
+Z32 !s108 1588514170.548000
+Z33 !s107 plotter.sv|synchronization.sv|PanelDisplay.sv|edge_detector.sv|keyboard.sv|main.sv|
+Z34 !s90 -reportprogress|300|main.sv|keyboard.sv|edge_detector.sv|PanelDisplay.sv|synchronization.sv|plotter.sv|
+o-O0
+!i10b 1
+!s85 0
+!s101 -O0
+vPanelDisplay
+R1
+Z35 !s100 mniai?fojSY8mKYjG0lgi2
+Z36 I67z?^GIN06^=1^Sca1<fI0
+Z37 VLUCl@O<zO_@_?8PQT][1<2
+S1
+R6
+Z38 w1588513414
+Z39 8PanelDisplay.sv
+Z40 FPanelDisplay.sv
+L0 1
+R10
+r1
+31
+R32
+R33
+R34
+o-O0
+Z41 n@panel@display
+Z42 !s105 PanelDisplay_sv_unit
+!i10b 1
+!s85 0
+!s101 -O0
+vplotter
+R1
+Z43 !s100 KoI_oi6PG1KP`bAOodeII0
+Z44 IOn57bVFZEd18GI`gF;oJO3
+Z45 VWnfgXo15_0gUo850T<?;^1
+S1
+R6
+Z46 w1588512595
+Z47 8plotter.sv
+Z48 Fplotter.sv
+L0 1
+R10
+r1
+31
+R32
+R33
+R34
+o-O0
+Z49 !s105 plotter_sv_unit
+!i10b 1
+!s85 0
+!s101 -O0
+vsynchronization
+R1
+Z50 !s100 ^RhhImohI<B5NlP^5e1N72
+Z51 IWnBAAKfY=V>jcKE`[BXbz2
+Z52 Vg]g5Vn4T0`OG7RhTgTdA03
+S1
+R6
+Z53 w1582728177
+Z54 8synchronization.sv
+Z55 Fsynchronization.sv
+L0 1
+R10
+r1
+31
+R32
+R33
+R34
+o-O0
+Z56 !s105 synchronization_sv_unit
+!i10b 1
+!s85 0
+!s101 -O0

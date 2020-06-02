@@ -1,9 +1,11 @@
 module keyboard (
-	input clk,
-	input rst,
-	input kData,
-	input kClock,
-	output [7:0] character
+	input logic clk,
+	input logic rst,
+	input logic kData,
+	input logic kClock,
+	output logic [7:0] character,
+	output logic waveform_state,
+	output logic [3:0] counter
 );
 
 // keyboard clock edge detection
@@ -27,10 +29,10 @@ edge_detector edge_data (.clk(clk),
 
 // creating the sampled data sequence
 logic [10:0] data_sequence;
-logic waveform_state;
+/* logic waveform_state; */
 always_ff @(posedge clk, negedge rst) begin
 	if(~rst) begin
-		data_sequence <= 0;
+		data_sequence <= 11'b11111111111;
 		waveform_state <= 1;
 	end else begin
 		// calculating current data (based on rising or falling edges)
@@ -41,15 +43,15 @@ always_ff @(posedge clk, negedge rst) begin
 		end
 		// sampling the data
 		if(clock_rising) begin
-			data_sequence[9:0] <= data_sequence[10: 1];
-			data_sequence[10] <= waveform_state;
+			data_sequence[10:1] <= data_sequence[9:0];
+			data_sequence[0] <= waveform_state;
 		end
 	end
 end
 
 		
 // counting when the sequence is over
-logic [4:0] period_counter;
+logic [3:0] period_counter;
 always_ff @(posedge clk, negedge rst) begin
 	if(~rst) begin
 		period_counter <= 0;
@@ -63,12 +65,19 @@ always_ff @(posedge clk, negedge rst) begin
 	end
 end
 
+
 // send the signal to other modules
+logic allow;
 always_comb begin
-	if(period_counter==10)
-		character = data_sequence[8:1];
-	else
-		character = 8'b00000000;
+	if(period_counter < 10 && clock_rising)
+		allow <= 0;
+	if(period_counter == 10 && clock_rising)
+		allow <= 1;
 end
+
+
+assign character = (allow) ? data_sequence[8:1] : 8'b00000000;
+assign out = waveform_state;
+assign counter = period_counter;
 
 endmodule
