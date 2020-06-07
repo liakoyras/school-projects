@@ -1,6 +1,6 @@
 module find_winner(
 	input logic [6:0][5:0][1:0] panel,
-	input logic turn
+	input logic turn,
 
 	output logic winner,
 	output logic exists
