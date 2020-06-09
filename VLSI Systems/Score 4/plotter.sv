@@ -5,6 +5,8 @@ module plotter(
 	input logic [6:0][5:0][1:0] panel,
 	input logic [6:0] play,
 	input logic turn,
+	
+	input logic win,
 
 	output logic [3:0] data_red,
 	output logic [3:0] data_green,

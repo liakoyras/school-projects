@@ -1,23 +1,32 @@
-module free_row(
+module free_row (
 	input logic [6:0][5:0][1:0] panel,
 	input logic [6:0] play,
 
-	output logic [3:0] free,
+	output logic [2:0] free,
 	output logic valid
 );
 
+// find the selected column
+logic [2:0] selected_column;
+active_column column (.play(play),
+					.column(selected_column)
+					);
+					
+logic [5:0] full_rows;
 always_comb begin
-	valid = 0; // if the selected column is full (, the move is invalid
-	for(int i=0; i<7; i=i+1) begin // loops through the columns 
-		if(play[i]==1'b1) begin // finds the active column
-			for(int j=6; j<0; j=j-1) begin // loops through the rows
-				if(panel[i][j]==2'b00 && ~valid) begin // checks each row of the selected column, only if no valid places were found so far
-					free = j; // sets the free row
-					valid = 1'b1; // this variable also makes sure that once the first free row is found, the variable will not be overwritten
-				end
-			end
-		end
+	full_rows = 0;
+	for(int i=0; i<6; i=i+1) begin // loops through the rows, starting from the bottom
+		full_rows[i] = |panel[selected_column][i]; // creates a vector with 1 if full, 0 if empty
 	end
+	valid = ~(&full_rows); // if all columns are not full, it is a valid move
+	
+	if(full_rows==6'b000000) free = 5; // finds the position of the first 0
+	else if(full_rows==6'b100000) free = 4;
+	else if(full_rows==6'b110000) free = 3;
+	else if(full_rows==6'b111000) free = 2;
+	else if(full_rows==6'b111100) free = 1;
+	else if(full_rows==6'b111110) free = 0;
+	else free = 6;
 end
 
 endmodule

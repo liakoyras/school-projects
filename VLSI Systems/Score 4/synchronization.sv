@@ -18,7 +18,7 @@ end
 
 
 // Divide clock by 2
-always_ff @(posedge clk, negedge rst) begin
+always_ff @(posedge clk, posedge rst) begin
 	if(rst)
 		half_clock <= 1'b0;
 	else
@@ -27,7 +27,7 @@ end
 
 // Counters
 // columns and rows counters
-always_ff @(posedge clk, negedge rst) begin
+always_ff @(posedge clk, posedge rst) begin
 	if(rst) begin
 		columns <= 0;
 		rows <= 0;

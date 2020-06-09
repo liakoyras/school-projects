@@ -20,15 +20,21 @@ module score4 (
 );
 
 // set unused i-o
-assign invalid_move = 0;
 
 
 // transfer state
 logic [6:0][5:0][1:0] game_panel;
 logic [6:0] game_play;
 logic game_turn;
+
+logic [6:0][5:0][1:0] panel_updated;
+logic [6:0] play_updated;
+logic turn_updated;
 state game_state (.clk(clk),
 				.rst(rst),
+				.panel_in(panel_updated),
+				.play_in(play_updated),
+				.turn_in(turn_updated),
 				.panel(game_panel),
 				.play(game_play),
 				.turn(game_turn)
@@ -56,10 +62,9 @@ full_board full (.panel(game_panel),
 				 .full(full_panel)
 				);
 
-
+// find if there is a winner
 logic game_winner;
 logic winner_exists;
-// find if there is a winner
 find_winner winner (.panel(game_panel),
 					.turn(game_turn),
 					.winner(game_winner),
@@ -68,6 +73,23 @@ find_winner winner (.panel(game_panel),
 					
 assign win_a = winner_exists & (~game_winner);
 assign win_b = winner_exists & game_winner;
+
+
+// updating the game state depending on the input
+update_state update (.clk(clk),
+					.rst(rst),
+					.left(left),
+					.right(right),
+					.put(put),
+					.panel_in(game_panel),
+					.play_in(game_play),
+					.turn_in(game_turn),
+					.win(winner_exists),
+					.panel_out(panel_updated),
+					.play_out(play_updated),
+					.turn_out(turn_updated),
+					.invalid(invalid_move)
+					);
 
 
 endmodule

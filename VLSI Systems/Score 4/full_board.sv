@@ -1,16 +1,17 @@
-module full_board(
+module full_board (
 	input logic [6:0][5:0][1:0] panel,
 
 	output logic full
 );
 
+logic [6:0] column_full;
 always_comb begin
-	full = 1; // we are considering the board to be full until we find an empty spot
-	for(int i = 0; i<7; i=i+1) begin // loops through the columns 
-		if(panel[i][0] == 2'b00 && full) begin // checks if the last row is free (only if no columns with free spots were found so far)
-			full = 0; // if a free spot is found, the board is not full anymore
-		end
+	column_full = 0;
+	for(int i=0; i<7; i=i+1) begin // loops through the columns
+		column_full[i] = |panel[i][0]; // creates a vector with 1 if full, 0 if empty
 	end
+	full = &column_full; // if all columns are full, the board is full
 end
+
 
 endmodule

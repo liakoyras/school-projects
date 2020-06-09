@@ -83,12 +83,15 @@ initial begin
 	//  V_ERROR: check for errors on columns
 	//  FULL:    Fill the panel -- WARNING! this creates 70 frames ~> almost 2GB
 	//  MY_GAME: create your own game 
-	scenario = MY_GAME;
+	scenario = WIN_1_D;
 	
 	case(scenario)
 	MY_GAME: begin 
-		do_nothing();
-
+		lets_put();
+		lets_put();
+		go_right();
+		go_right();
+		lets_put();
 		// YOUR GAME HERE
 		// Choose your moves: go_right(), go_left(), lets_put()
 		
