@@ -40,35 +40,31 @@ state game_state (.clk(clk),
 				.turn(game_turn)
 				);
 
-
-// display the game
-vga_display vga (.clk(clk),
-				.rst(rst),
-				.panel(game_panel),
-				.play(game_play),
-				.turn(game_turn),
-				.hsync(hsync),
-				.vsync(vsync),
-				.red(red),
-				.green(green),
-				.blue(blue)
-				);
 			
 // output the current player
 assign player = game_turn;
-			
+
+logic full;
 // check if the board is full_panel
-full_board full (.panel(game_panel),
-				 .full(full_panel)
+full_board fb (.panel(game_panel),
+				 .full(full)
 				);
+
+assign full_panel = full;
 
 // find if there is a winner
 logic game_winner;
 logic winner_exists;
+logic [2:0] winner_row;
+logic [2:0] winner_column;
+logic [1:0] winner_kind;
 find_winner winner (.panel(game_panel),
 					.turn(game_turn),
 					.winner(game_winner),
-					.exists(winner_exists)
+					.exists(winner_exists),
+					.row_out(winner_row),
+					.column_out(winner_column),
+					.kind_out(winner_kind)
 				   );
 					
 assign win_a = winner_exists & (~game_winner);
@@ -85,11 +81,30 @@ update_state update (.clk(clk),
 					.play_in(game_play),
 					.turn_in(game_turn),
 					.win(winner_exists),
+					.full(full),
 					.panel_out(panel_updated),
 					.play_out(play_updated),
 					.turn_out(turn_updated),
 					.invalid(invalid_move)
 					);
 
-
+// display the game
+vga_display vga (.clk(clk),
+				.rst(rst),
+				.panel(game_panel),
+				.play(game_play),
+				.turn(game_turn),
+				.hsync(hsync),
+				.vsync(vsync),
+				.win(winner_exists),
+				.winner_column(winner_column),
+				.winner_row(winner_row),
+				.winner_kind(winner_kind),
+				.full(full),
+				.red(red),
+				.green(green),
+				.blue(blue)
+				);
+				
+				
 endmodule

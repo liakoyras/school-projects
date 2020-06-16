@@ -11,6 +11,7 @@ module update_state (
 	input  logic put,
 	
 	input logic win,
+	input logic full,
 	
 	output logic [6:0][5:0][1:0] panel_out,
 	output logic [6:0] play_out,
@@ -68,7 +69,8 @@ enum logic [3:0] {
 	CIP = 4'b0101,
 	PUT = 4'b0110,
 	INVALID = 4'b0111,
-	WIN = 4'b1000
+	WIN = 4'b1000,
+	FULL = 4'b1111
 } fsm_state;
 
 // start the game state from idle
@@ -94,6 +96,7 @@ always_ff @(posedge clk) begin
 				else if(r) fsm_state <= CIR;
 				else if(p) fsm_state <= CIP;
 				else if(win) fsm_state <= WIN;
+				else if(full) fsm_state <= FULL;
 				else fsm_state <= WAIT;
 			end
 			CIL: begin // checks if the left move propsed is possible
@@ -141,6 +144,10 @@ always_ff @(posedge clk) begin
 			end
 			WIN: begin
 				invalid <= 0;
+				fsm_state <= WIN;
+			end
+			FULL: begin
+				fsm_state <= FULL;
 			end
 		endcase
 	end

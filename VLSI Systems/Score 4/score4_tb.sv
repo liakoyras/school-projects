@@ -83,7 +83,7 @@ initial begin
 	//  V_ERROR: check for errors on columns
 	//  FULL:    Fill the panel -- WARNING! this creates 70 frames ~> almost 2GB
 	//  MY_GAME: create your own game 
-	scenario = WIN_1_D;
+	scenario = WIN_2_R;
 	
 	case(scenario)
 	MY_GAME: begin 
