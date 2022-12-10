@@ -5,14 +5,7 @@
 #include "ac_int.h"
 #include "ac_math.h"
 
-/**
- * Describe a point in 2D euclidean space with two coordinates.
- */
-struct Point {
-    ac_int<16, false> x;
-    ac_int<16, false> y;
-};
-
+#include "types.h"
 
 /**
  * Perform one iteration of the K-Means algorithm.
