@@ -7,6 +7,8 @@
 
 #include "types.h"
 
+#include "mc_scverify.h"
+
 /**
  * Perform one iteration of the K-Means algorithm.
  *
@@ -25,7 +27,7 @@
  * @returns true if the algorithm converged.
  */
 template<int N, int M>
-bool kmeans(Point points[N], int ID[N], Point center[M]) {
+bool CCS_BLOCK(kmeans)(Point points[N], int ID[N], Point center[M]) {
     POINTS: for (int i = 0; i < N; i++) {
         // Read each data sample
         ac_int<16, false> x = points[i].x;
@@ -93,7 +95,7 @@ bool kmeans(Point points[N], int ID[N], Point center[M]) {
 /**
  * Program testbench.
  */
-int main(int argc, char** argv) {
+CCS_MAIN(int argc, char** argv) {
     std::srand(std::time(NULL)); // Use current time as seed for random generator
     const unsigned short N = 50; // Number of samples
     const unsigned short M = 3;  // Number of clusters
@@ -144,6 +146,6 @@ int main(int argc, char** argv) {
         std::cout << center[i].x << " " << center[i].y << std::endl;
     }
     
-    return 0;
+    CCS_RETURN(0);
 }
 
