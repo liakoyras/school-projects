@@ -50,6 +50,7 @@ tln = lib.TwoLayerNetwork(4, 3, 30, 'sigmoid', dtype=dtype)
 cel = nn.CrossEntropyLoss()
 sgd = SGD(tln.parameters(), lr=1e-3)
 
+# Train network
 epochs = int(1e+5)
 metrics = np.zeros((epochs, 3))
 for epoch in range(epochs):
