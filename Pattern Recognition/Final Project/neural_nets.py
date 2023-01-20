@@ -13,7 +13,7 @@ class CNN(nn.Module):
     
     convolution + (maybe) batch normalization + activation + pooling 
     
-    followed by flattening and fully convolutional layers.
+    followed by flattening and fully connected layers.
     
     For the sake of simplicity, this class makes certain assumptions and does
     not attempt to make everything customizable.
@@ -71,7 +71,7 @@ class CNN(nn.Module):
         input_channels : int
             The number of channels that the input image has.
             For example, 1 for grayscale and 3 for RGB.
-        fully connected : list of int
+        fully_connected : list of int
             The number of neurons on each fully connected layer.            
         input_dims : tuple of int
             The dimensions (width, height) of input images. It will be used
@@ -168,5 +168,138 @@ class CNN(nn.Module):
                 final_out = fc_layer(final_out)
         else:
             final_out = self.fc_layers[0](flat)
-            
+        
         return final_out
+
+
+
+class FCN(nn.Module):
+    """
+    Represent a parameterizeable FCN using PyTorch (inheriting from nn.Module).
+    
+    The intention of this Fully Convolutional architecture is to mimic the
+    behavior of a vanilla CNN that uses Fully Connected layers after the
+    convolutional ones, while utilizing the input size invariability that a
+    rolling convolution window offers as opposed to a linear transformation
+    fully connected layer.
+    
+    Instead of fully connected layers, the final layers are convolutions with
+    kernel size equal to the size of the image, along with global pooling
+    (to achieve the afforementioned invariability).
+    
+    In addition, the convolutional layers + pooling are much less prone to
+    overfitting and continue to keep the spatial relationships between the
+    features, as opposed to the fully connected layers.
+    
+    For more information on the architecture and the assumptions this class
+    makes, see the CNN class.
+    
+    Attributes
+    ----------
+    conv_layers : nn.ModuleList() of nn.Sequential()
+        A list of Sequentials that each contains at least a conv layer,
+        activation and max pooling, and possibly batch normalization.
+        The object to convert data to 1-D before the fully connected layers.
+    fcnn_layers : nn.ModuleList() of nn.Conv2d()
+        A list of convolutional nodes that take the place of fully connected
+        layers on a vanilla CNN.
+        
+    See Also
+    -------
+    CNN : Represent a parameterizeable CNN using PyTorch.
+    """
+    def __init__(self, n_conv_layers, filters, kernel, activation, norm, pool, input_channels, fully_convolutional, input_dims, classes):
+        """
+        Constructs all the necessary layers for the CNN object.
+        
+        All parameters and errors raised are the same as the CNN class, except
+        fully_convolutional that replaces fully_connected and is explained
+        below.
+
+        Parameters
+        ----------
+        fully_convolutional : list of int
+            The number of filters on each of the final fully convolutional
+            layers. In case an instance is modeled after a CNN+fully connected
+            architecture, this is equivalent to the number of neurons on each 
+            of those final layers.
+        """
+        super(FCN, self).__init__()
+        if not all(len(p) == n_conv_layers for p in [filters, kernel, activation, norm]):
+            raise ValueError("The length of filters, kernel, activation, pool "\
+                             "and norm parameters must be equal to the number "\
+                             "of layers (n_conv_layers parameter).")
+        if len(input_dims) == 2:
+            if input_dims[0] != input_dims[1]:
+                raise ValueError("Input image must be square.")
+        else:
+            raise ValueError("input_dims must be of length 2.")
+        
+        # Create convolutional layers (with activation, pooling etc)
+        self.conv_layers = nn.ModuleList()
+        for f, k, a, p, n in zip(filters, kernel, activation, pool, norm):
+            layer = []
+            layer.append(nn.Conv2d(input_channels, f, kernel_size=k, padding='same'))
+                         
+            input_channels = f # input depth for the next layer
+            
+            if n: # batch norm before activation
+                layer.append(nn.BatchNorm2d(f))
+            
+            if a == 'relu':
+                layer.append(nn.ReLU())
+            else:
+                layer.append(nn.ReLU())
+            
+            layer.append(nn.MaxPool2d(p))
+            
+            layers = nn.Sequential(*layer)
+            self.conv_layers.append(layers)
+        
+        
+        # Calculate size of image after the convolutional layers
+        dims = input_dims
+        for p in pool:
+            # formula adapted from 
+            # https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html
+            dims  = tuple( int(((dim - (p-1) -1)/p) + 1) for dim in dims)
+        
+        # Create final fully convolutional layers
+        self.fcnn_layers = nn.ModuleList()
+
+        fcnn1 = nn.Conv2d(filters[-1], fully_convolutional[0], kernel_size=dims, padding=0)
+        self.fcnn_layers.append(fcnn1)
+        
+        fully_convolutional.append(classes)
+        for chan_in, chan_out in zip(fully_convolutional, fully_convolutional[1:]):
+            fcnn_layer = nn.Conv2d(chan_in, chan_out, kernel_size=1, padding=0)
+            self.fcnn_layers.append(fcnn_layer)
+        
+        # Global Average Pooling
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        
+    def forward(self, x):
+        """
+        Define how the network is run.
+        
+        Chain the convolutional layers (augmented with any pooling etc.) at
+        the beginning, and then the pure convolutions and global pooling.
+        """
+        if len(self.conv_layers) > 1:
+            layer_out = self.conv_layers[0](x)
+            for layer in self.conv_layers[1:]:
+                layer_out = layer(layer_out)
+        else:
+            layer_out = self.conv_layers[0](x)
+        
+        if len(self.fcnn_layers) > 1:
+            final_out = self.fcnn_layers[0](layer_out)
+            for fcnn_layer in self.fcnn_layers[1:]:
+                final_out = fcnn_layer(final_out)
+        else:
+            final_out = self.fcnn_layers[0](layer_out)
+        
+        pooled_out = self.gap(final_out)
+        out = torch.squeeze(pooled_out)
+        
+        return out
