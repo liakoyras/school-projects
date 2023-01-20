@@ -4,7 +4,6 @@ Utilities that help with training and testing the neural networks.
 import torch
 
 from torch import max as tmax
-from torch.autograd import Variable
 
 import matplotlib.pyplot as plt
 
@@ -78,9 +77,6 @@ def train_epoch(model, loss_fn, optimizer, train_loader, verbose=1, epoch=None):
     
     losses = []
     for i, (images, labels) in enumerate(train_loader):
-        images = Variable(images.float())
-        labels = Variable(labels)
-
         loss = batch_train(model, images, labels, loss_fn, optimizer)
         losses.append(loss)
 
@@ -117,7 +113,6 @@ def test_model(model, test_loader):
         correct = 0
         total = 0
         for images, labels in test_loader:
-            images = Variable(images.float())
             outputs = model(images)                  # make predictions
             _, predicted = tmax(outputs.data, 1)   # convert predictions
             total += labels.size(0)                # calculate number of images
