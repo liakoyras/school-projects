@@ -113,12 +113,12 @@ def test_model(model, test_loader):
         correct = 0
         total = 0
         for images, labels in test_loader:
-            outputs = model(images)                  # make predictions
+            outputs = model(images)                # make predictions
             _, predicted = tmax(outputs.data, 1)   # convert predictions
             total += labels.size(0)                # calculate number of images
             correct += (predicted == labels).sum() # calculate correct preds
     
-    return correct/total
+    return (correct/total).item()
 
 def train_loop(model, loss_fn, optimizer, train_loader, test_loader=None, epochs=50, verbose=1):
     """
