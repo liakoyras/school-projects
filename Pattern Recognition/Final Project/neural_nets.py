@@ -18,6 +18,10 @@ class CNN(nn.Module):
     For the sake of simplicity, this class makes certain assumptions and does
     not attempt to make everything customizable.
     
+    Note that it is possible to modify this architecture, for example by
+    using pooling with 0 size kernel and no batch normalization in order to
+    chain purely convolutional layers together.
+    
     Things that CAN be parameterized:
     - Number of convolutional and fully connected layers
     - Number of kernels/neurons per layer
@@ -67,7 +71,8 @@ class CNN(nn.Module):
         norm : list of bool
             Whether or not each layer will have batch normalization.
         pool : list of int
-            The size of the (square) pooling kernel at each layer.
+            The size of the (square) pooling kernel at each layer. If 0 is
+            passed, this pooling layer will be ignored.
         input_channels : int
             The number of channels that the input image has.
             For example, 1 for grayscale and 3 for RGB.
@@ -108,7 +113,7 @@ class CNN(nn.Module):
         for f, k, a, p, n in zip(filters, kernel, activation, pool, norm):
             layer = []
             layer.append(nn.Conv2d(input_channels, f, kernel_size=k, padding='same'))
-                         
+            
             input_channels = f # input depth for the next layer
             
             if n: # batch norm before activation
@@ -119,7 +124,8 @@ class CNN(nn.Module):
             else:
                 layer.append(nn.ReLU())
             
-            layer.append(nn.MaxPool2d(p))
+            if p != 0:
+                layer.append(nn.MaxPool2d(p))
             
             layers = nn.Sequential(*layer)
             self.conv_layers.append(layers)
@@ -135,8 +141,10 @@ class CNN(nn.Module):
         for p in pool:
             # formula adapted from 
             # https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html
-            dims  = tuple( ((dim - (p-1) -1)/p) + 1  for dim in dims)
-
+            # using the assumptions of this class
+            if p != 0:
+                dims  = tuple( ((dim - (p-1) -1)/p) + 1  for dim in dims)
+        
         flat_size = int(math.prod(tuple(dim  for dim in dims)) * filters[-1])
         fully_connected.insert(0, flat_size)
         
@@ -251,7 +259,8 @@ class FCN(nn.Module):
             else:
                 layer.append(nn.ReLU())
             
-            layer.append(nn.MaxPool2d(p))
+            if p != 0:
+                layer.append(nn.MaxPool2d(p))
             
             layers = nn.Sequential(*layer)
             self.conv_layers.append(layers)
@@ -262,7 +271,8 @@ class FCN(nn.Module):
         for p in pool:
             # formula adapted from 
             # https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html
-            dims  = tuple( int(((dim - (p-1) -1)/p) + 1) for dim in dims)
+            if p != 0:
+                dims  = tuple( int(((dim - (p-1) -1)/p) + 1) for dim in dims)
         
         # Create final fully convolutional layers
         self.fcnn_layers = nn.ModuleList()
