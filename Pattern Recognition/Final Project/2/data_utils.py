@@ -10,6 +10,8 @@ from skimage.io import imread
 from skimage.transform import resize
 from skimage.feature import hog
 
+from sklearn.model_selection import train_test_split
+
 
 def read_images(data_path, class_ignore=[], target_dims=(32,32), grayscale=False):
     """
@@ -106,3 +108,37 @@ def extract_features(images, method='pixels', pandas=True):
         dataset = pd.DataFrame(dataset)
         
     return dataset
+
+
+def train_test_val_split(dataset, train=0.6, val=0.2):
+    """
+    Split a dataset into train, validation and test sets.
+    
+    Parameters
+    ----------
+    dataset : pd.DataFrame
+        The dataset to split.
+    train : float, default 0.6
+        The percentage of the training set.
+    val : float, default 0.2
+        The percentage of the validation set.
+    
+    Returns
+    -------
+    list of pd.DataFrame
+        A list containing the three split sets. The initial indexing is kept.
+    
+    Raises
+    ------
+    ValueError
+        If the provided percentages add up to more than 1.
+    """
+    test = 1 - train - val
+    if test <= 0:
+        raise ValueError("Train and Validation percentage must add up to less than 1.")
+    
+    train, test_val = train_test_split(dataset, train_size=train, random_state=42)
+    val = val/(test+val)
+    val, test = train_test_split(test_val, train_size=val, random_state=42)
+    
+    return [train, val, test]
