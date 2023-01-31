@@ -79,7 +79,7 @@ def test(model, test_features, test_target, scaler=None):
     return accuracy
 
 
-def reduce_dimensions(train_features, train_target, test_features, method='pca', target_dimensions=10):
+def reduce_dimensions(train_features, train_target, method='pca', target_dimensions=10, transform=None):
     """
     Reduces the dimensionality of a dataset using different methods.
     
@@ -87,21 +87,23 @@ def reduce_dimensions(train_features, train_target, test_features, method='pca',
     ----------
     train_features : pd.DataFrame or np.ndarray
         The features of the train set.
-    test_features : pd.DataFrame or np.ndarray
-        The features of the test set.
-    test_target : pd.Series or np.ndarray
-        The 1-D vector with the true class labels of the test set.
+    train_target : pd.Series or np.ndarray of shape (n_samples, 1)
+        The target variable of the training set.
     method : {'pca', 'mutual-info', 'chi2', 'anova-f'}
         The dimensionality reduction (or feature selection) method.
     target_dimensions : int, default 10
         The number of dimensions the output feature sets are going to have.
+    transform : list of array-like, optional
+        If a list-like is passed, its elements will be transformed by the
+        dimensionality reduction technique and then returned.
         
     Returns
     -------
-    reduced_train : np.ndarray of shape (n_samples, target_dimensions)
-        The train set with its dimensions reduced.
-    reduced_test : np.ndarray of shape (n_samples, target_dimensions)
-        The test set with its dimensions reduced.
+    reducer : sklearn object that implements .transform()
+        The fitted object that can transform a feature set.
+    reduced : None or list-like
+        If a list of feature sets was passed with the transform argument,
+        they will be transformed and returned.
     """
     if method == 'pca':
         reducer = PCA(n_components=target_dimensions, random_state=ALG_SEED)
@@ -111,8 +113,48 @@ def reduce_dimensions(train_features, train_target, test_features, method='pca',
         reducer = SelectKBest(chi2, k=target_dimensions)
     elif method == 'anova-f':
         reducer = SelectKBest(f_classif, k=target_dimensions)
-        
-    reduced_train = reducer.fit_transform(train_features, train_target)
-    reduced_val = reducer.transform(test_features)
+    
+    reducer.fit(train_features, train_target)
+    
+    if transform is None:
+        reduced = None
+    else:
+        reduced = []
+        for element in transform:
+            reduced.append(reducer.transform(element))
 
-    return reduced_train, reduced_val
+    return reducer, reduced
+
+
+def classifier_threshold(classifier, test_data, threshold=0.5):
+    """
+    Changes a classifier's threshold.
+    
+    This function only works if the classifier given implements
+    .predict_proba(), which returns for each sample a tuple with the
+    probability of the sample belonging to each class.
+    
+    By definition, this makes sense only for binary classification, and
+    the implementation is based on this (will not work correctly for more
+    than two classes).
+    
+    Parameters
+    ----------
+    classifier : sklearn classifier that implements .predict_proba()
+        The (fitted) classifier to change the threshold of. 
+    test_data : pd.DataFrame or np.ndarray
+        The features to make predictions on.
+    train_target : pd.Series or np.ndarray of shape (n_samples, 1)
+        The target variable of the training set.
+    threshold : float, default 0.5
+        The probability threshold that the sample belongs to the positive
+        class (class 1).
+        
+    Returns
+    -------
+    np.ndarrray of shape (n_samples,)
+        The model's predictions based on the given threshold.
+    """
+    predidctions = (classifier.predict_proba(test_data)[:,1] >= threshold).astype(bool)
+    
+    return predidctions
