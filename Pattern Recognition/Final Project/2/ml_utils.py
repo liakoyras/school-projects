@@ -108,7 +108,9 @@ def reduce_dimensions(train_features, train_target, method='pca', target_dimensi
     if method == 'pca':
         reducer = PCA(n_components=target_dimensions, random_state=ALG_SEED)
     elif method == 'mutual-info':
-        reducer = SelectKBest(mutual_info_classif, k=target_dimensions)
+        def mi_seed(X, y):
+            return mutual_info_classif(X, y, random_state=42)
+        reducer = SelectKBest(mi_seed, k=target_dimensions)
     elif method == 'chi2':
         reducer = SelectKBest(chi2, k=target_dimensions)
     elif method == 'anova-f':
