@@ -7,7 +7,7 @@ You can find more information on each course's individual README.
 
 ### High Level Synthesis
 For this course, we had to write C++ code that describes hardware modules and can later be transpiled into synthesizable HDL.<br>
-[Jump to the repo](<./High Level Synthesis>)<br>
+[Jump to the code](<./High Level Synthesis>)<br>
 For the final group project, we wrote C++ code that can synthesize a simple RISC-V processor.<br>
 [Jump to the repo](https://github.com/lamprini19/TinyRV2-HLS)
 
