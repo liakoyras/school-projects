@@ -3,7 +3,13 @@ This is a repository that contains many of the code projects I worked on for uni
 
 ## Index
 The courses are listed in chronological order, with newer projects closer to the top.<br>
-You can find more information on each project's individual README.
+You can find more information on each course's individual README.
+
+### High Level Synthesis
+For this course, we had to write C++ code that describes hardware modules and can later be transpiled into synthesizable HDL.<br>
+[Jump to the repo](<./High Level Synthesis>)<br>
+For the final group project, we wrote C++ code that can synthesize a simple RISC-V processor.<br>
+[Jump to the repo](https://github.com/lamprini19/TinyRV2-HLS)
 
 ### Databases
 This is a group project in which we created a database that models the employees, patients and supplies of a healthcare company that manages a number of clinics. We also built a website that demonstrates some of the functionality that database supports.<br>
