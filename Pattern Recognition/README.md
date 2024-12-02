@@ -1,6 +1,6 @@
 # Computer Vision
 The projects I did for my 9th semester Pattern Recognition course.<br>
-I used Python and specifically the libraries numpy, pandas and keras.
+I used Python and specifically the libraries numpy, pandas, sci-kit learn and PyTorch.
 
 The code contains explanatory comments that show the thought process for scripts and docstrings that describe the functions that implement an algorithm or another data analysis process.
 
@@ -19,8 +19,7 @@ Those scripts build upon the code of the previous project, generating more compl
 ## Project 4 (Linear Discriminants & SVM)
 The code in `lib.py` implements helper functions and classification algorithms that are then used for the following scripts:
 - `linear_classifiers.py`: Compare the results and the decision boundary found by a batch perceptron algorithm and a linear SVM algorithm for two generated classes
-- `svm_classification.py`: Compare linear and non-linear SVM kernels for binary and multi-class classification on the [Iris Seed Dataset](https://archive.ics.uci.edu/ml/machine-learningdatabases/
-00236/seeds_dataset.txt) using cross validation
+- `svm_classification.py`: Compare linear and non-linear SVM kernels for binary and multi-class classification on the [Iris Seed Dataset](https://archive.ics.uci.edu/ml/machine-learningdatabases/00236/seeds_dataset.txt) using cross validation
 
 ## Project 5 (Clustering)
 The script performs Silhouette Coefficient Analysis for the Iris Seed Dataset and K-means clustering, while comparing different distance metrics.
@@ -31,7 +30,7 @@ The script uses a simple neural network to classify the [Iris Dataset](https://a
 ## Final Project (Image Classification)
 For Part 1 of the project, I had to use a Convolutional Neural Network and test various architectures and techniques (fully convolutional, batch normalization, hyperparameter tuning) to increase the classification accuracy on the [CIFAR-10](https://www.cs.toronto.edu/%7Ekriz/cifar.html) dataset without signs of overfitting.
 
-For Part 2 of the project, the task was to classify images based on the use of a protective face mask, using classical machine learning techniques an dimensionality reduction.<br>
+For Part 2 of the project, the task was to classify images based on the use of a protective face mask, using classical machine learning techniques and dimensionality reduction.<br>
 After finding the best dimensionality reduction technique and best classification algorithms using the validation set, I fine-tuned classifier hyperparameters and used classifier stacking to improve the classification accuracy.<br>
-Finally, the model was tested with edge cases (incorrect use of face mask), and the effect of changing the classification threshold with the tradeoffs it entails is studied and discussed.
-  
+Finally, the best model was tested with edge cases (incorrect use of face mask), and the effect of changing the classification threshold with the tradeoffs it entails is studied and discussed.
+
