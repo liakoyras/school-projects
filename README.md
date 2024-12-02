@@ -5,6 +5,10 @@ This is a repository that contains many of the code projects I worked on for uni
 The courses are listed in chronological order, with newer projects closer to the top.<br>
 You can find more information on each course's individual README.
 
+### Pattern Recognition
+For this course, I wrote several scripts that generate and analyze data, as well as implement and test machine learning algorithms and neural network architectures.<br>
+[Jump to the code](<./Pattern Recognition>)
+
 ### High Level Synthesis
 For this course, we had to write C++ code that describes hardware modules and can later be transpiled into synthesizable HDL.<br>
 [Jump to the code](<./High Level Synthesis>)<br>
@@ -16,7 +20,7 @@ This is a group project in which we created a database that models the employees
 [Jump to the repo](https://github.com/darklex55/DBT5)
 
 ### Computer Vision
-This is contains the Python projects i did for the Computer Vision course, including a program that counts the cells in an photograph from a microscope, an image panorama creator, and image classifiers using K-Nearest Neighbors, SVMs and Convolutional Neural Networks.<br>
+This contains the Python projects i did for the Computer Vision course, including a program that counts the cells in an photograph from a microscope, an image panorama creator, and image classifiers using K-Nearest Neighbors, SVMs and Convolutional Neural Networks.<br>
 [Jump to the code](<./Computer Vision>)
 
 ### Microprocessors
